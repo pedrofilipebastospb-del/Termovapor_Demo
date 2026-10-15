@@ -13,9 +13,9 @@ export type Conta = { utilizador: string; senha: string; perfil: Perfil; nome: s
 // Contas locais de acesso (sem servidor). Na versão final passam a ser
 // utilizadores individuais autenticados no servidor.
 export const CONTAS: Conta[] = [
-  { utilizador: "admin", senha: "termovapor-admin", perfil: ADMIN, nome: "Nuno Barros", funcao: "Direção técnica" },
-  { utilizador: "oe", senha: "termovapor-oe", perfil: ENG, nome: "Marta Lopes", funcao: "Engenharia / preparação" },
-  { utilizador: "oif", senha: "termovapor-oif", perfil: ELE, nome: "Rui Ferreira", funcao: "Eletricidade / automação" },
+  { utilizador: "admin", senha: "termovapor-admin", perfil: ADMIN, nome: "Sérgio Carvalho", funcao: "Direção técnica" },
+  { utilizador: "oe", senha: "termovapor-oe", perfil: ENG, nome: "", funcao: "Engenharia / preparação" },
+  { utilizador: "oif", senha: "termovapor-oif", perfil: ELE, nome: "", funcao: "Eletricidade / automação" },
 ];
 
 export const contaDe = (perfil: Perfil) => CONTAS.find((c) => c.perfil === perfil)!;
@@ -97,4 +97,4 @@ export const veComercial = (perfil: Perfil) => perfil !== ELE;
 /** Custos internos só para Administração e Eletricidade. */
 export const veCustos = (perfil: Perfil) => perfil !== ENG;
 /** Ligação para uma OE respeitando o perfil (a Eletricidade abre a ficha de origem). */
-export const oeHref = (perfil: Perfil, numero: number) => (perfil === ELE ? `/origem/oe/${numero}` : `/oe/${numero}`);
+export const oeHref = (perfil: Perfil, numero: number | string) => (perfil === ELE ? `/origem/oe/${numero}` : `/oe/${numero}`);

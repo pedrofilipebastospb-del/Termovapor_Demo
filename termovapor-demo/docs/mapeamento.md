@@ -2,13 +2,13 @@
 
 Referências analisadas, apenas em leitura: `OE_V1_4_37_PESQUISA_SAGE_CORRIGIDA` (Python/Tkinter, SQLite `oe_v1.db`) e `OIF_ELETRICO_V3_3_RECECAO_OE_NF` (Python/Tkinter, SQLite `oif.db`). Nenhum dado real foi copiado: só a estrutura funcional, os campos e os fluxos.
 
-## OE — Ordens de Execução
+## OE · Ordens de Execução
 
 | Aplicação original | Demo |
 | --- | --- |
 | Janela principal (lista de OE, pesquisa, filtro por estado) | `/oe` |
 | `NewOEWindow` + `SageClientAutocomplete` (pesquisa sem acentos, várias palavras, n.º SAGE) | Modal **Nova OE** |
-| `OEDetailWindow`, separadores *Dados Gerais*, *Equipamentos / Intervenções*, *Elétrica / Automação — OIF*, *Documentação Final / Dossier*, *Histórico / Auditoria* | `/oe/[numero]`, com os mesmos cinco separadores |
+| `OEDetailWindow`, separadores *Dados Gerais*, *Equipamentos / Intervenções*, *Elétrica / Automação · OIF*, *Documentação Final / Dossier*, *Histórico / Auditoria* | `/oe/[numero]`, com os mesmos cinco separadores |
 | `AddNFWindow` (tipo de registo, equipamento, NF novo / existente) | Modal **Adicionar equipamento** |
 | `NFEditor` (*Definição técnica*, *Parte elétrica / Automação*, *Documentos*) | Painel lateral do NF |
 | `TEMPLATES` por tipo (Caldeira, Termoacumulador, Permutador…) | `data/templates.ts` (versão reduzida) |

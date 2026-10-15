@@ -44,7 +44,7 @@ function EncomendaDrawer({ enc, onClose }: { enc: Encomenda; onClose: () => void
             { label: "Artigo", render: (l) => { const a = state.artigos.find((x) => x.id === l.artigoId); return <span><b>{a?.codigo}</b><small className="block">{a?.descricao}</small></span>; } },
             { label: "Encomendado", align: "right", render: (l) => num(l.quantidade, 2) },
             { label: "Recebido", align: "right", render: (l) => <span className={l.recebido >= l.quantidade ? "positive" : ""}>{num(l.recebido, 2)}</span> },
-            { label: "Pendente", align: "right", render: (l) => (l.quantidade - l.recebido > 0 ? <Badge tone="amber">{num(l.quantidade - l.recebido, 2)}</Badge> : "—") },
+            { label: "Pendente", align: "right", render: (l) => (l.quantidade - l.recebido > 0 ? <Badge tone="amber">{num(l.quantidade - l.recebido, 2)}</Badge> : "Não indicado") },
             ...(podeReceber
               ? [
                   {
@@ -62,7 +62,7 @@ function EncomendaDrawer({ enc, onClose }: { enc: Encomenda; onClose: () => void
                           onChange={(e) => setQtd((q) => ({ ...q, [l.artigoId]: Math.max(0, Math.min(Number(e.target.value) || 0, l.quantidade - l.recebido)) }))}
                         />
                       ) : (
-                        "—"
+                        "Não indicado"
                       ),
                   },
                 ]
@@ -216,9 +216,9 @@ export function Rececoes() {
         columns={[
           { label: "Receção", render: (r) => <b>{r.numero}</b> },
           { label: "Encomenda", render: (r) => r.encomenda },
-          { label: "Fornecedor", render: (r) => state.fornecedores.find((f) => f.codigo === state.encomendas.find((e) => e.numero === r.encomenda)?.fornecedor)?.nome ?? "—" },
+          { label: "Fornecedor", render: (r) => state.fornecedores.find((f) => f.codigo === state.encomendas.find((e) => e.numero === r.encomenda)?.fornecedor)?.nome ?? "Não indicado" },
           { label: "Data", render: (r) => date(r.data) },
-          { label: "Guia", render: (r) => r.guia || <span className="muted">—</span> },
+          { label: "Guia", render: (r) => r.guia || <span className="muted">Não indicado</span> },
           {
             label: "Artigos recebidos",
             render: (r) => (

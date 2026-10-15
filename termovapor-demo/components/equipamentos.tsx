@@ -55,7 +55,7 @@ export function Equipamentos() {
         columns={[
           { label: "NF", render: (n) => <span className="cell-main">{n.principal && <CornerDownRight size={14} className="muted" />}<b>NF {n.numero}</b></span> },
           { label: "OE", render: (n) => <Link className="accent" href={`/oe/${n.oe}`} onClick={(e) => e.stopPropagation()}>OE {n.oe}</Link> },
-          { label: "Cliente", render: (n) => state.oes.find((o) => o.numero === n.oe)?.cliente ?? "—" },
+          { label: "Cliente", render: (n) => state.oes.find((o) => o.numero === n.oe)?.cliente ?? "Não indicado" },
           { label: "Tipo", render: (n) => n.tipo },
           { label: "Designação", render: (n) => <b>{n.designacao}</b> },
           { label: "Registo", render: (n) => <span className="muted">{n.registoTipo}</span> },

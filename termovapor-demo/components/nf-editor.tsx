@@ -1,4 +1,5 @@
 "use client";
+import { PdfLink } from "./pdf-link";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { FileText, Pencil, Plus, Zap } from "lucide-react";
@@ -22,7 +23,7 @@ function FieldInput({ def, value, onChange }: { def: FieldDef; value: string; on
   if (def.type === "combo" || def.type === "yesno")
     return (
       <select value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">—</option>
+        <option value="">Não indicado</option>
         {(def.options ?? ["Sim", "Não"]).map((o) => (
           <option key={o}>{o}</option>
         ))}
@@ -71,7 +72,7 @@ export function NFEditor({ numero, onClose }: { numero: string; onClose: () => v
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>(nf?.campos ?? {});
   const [anexar, setAnexar] = useState(false);
-  const fields = useMemo(() => (nf ? templateFor(nf.tipo, nf.registoTipo) : []), [nf]);
+  const fields = useMemo(() => (nf ? nf.camposOriginais ?? templateFor(nf.tipo, nf.registoTipo) : []), [nf]);
   if (!nf) return null;
   const tecnicos = fields.filter((f) => !f.electrical);
   const eletricos = fields.filter((f) => f.electrical);
@@ -86,7 +87,7 @@ export function NFEditor({ numero, onClose }: { numero: string; onClose: () => v
   };
 
   return (
-    <Modal drawer wide title={`NF ${nf.numero} — ${nf.designacao}`} subtitle={`OE ${nf.oe} · ${nf.registoTipo} · ${nf.tipo}`} onClose={onClose}>
+    <Modal drawer wide title={`NF ${nf.numero} · ${nf.designacao}`} subtitle={`OE ${nf.oe} · ${nf.registoTipo} · ${nf.tipo}`} onClose={onClose}>
       <div className="modal-body">
         <div className="title-row" style={{ marginBottom: 16 }}>
           <StatusBadge estado={nf.estado} />
@@ -154,10 +155,10 @@ export function NFEditor({ numero, onClose }: { numero: string; onClose: () => v
                   <span>
                     <b>{d.descricao}</b>
                     <small>
-                      {d.nome} · {d.categoria} · {d.paginas} pág. · {date(d.data)}
+                      {d.nome} · {d.categoria}{d.paginas ? ` · ${d.paginas} pág.` : ""}{d.data ? ` · ${date(d.data)}` : ""}
                     </small>
                   </span>
-                  <FileText size={15} className="muted" />
+                  <PdfLink href={d.pdfUrl} />
                 </div>
               ))
             ) : (

@@ -1,4 +1,5 @@
 "use client";
+import { PdfLink } from "./pdf-link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
@@ -65,8 +66,8 @@ export function Documentacao() {
               </span>
             ),
           },
-          { label: "Elétrica (OIF)", align: "right", render: (r) => (r.eletricos ? <Badge tone="blue">{r.eletricos}</Badge> : <span className="muted">—</span>) },
-          { label: "Páginas", align: "right", render: (r) => r.paginas || "—" },
+          { label: "Elétrica (OIF)", align: "right", render: (r) => (r.eletricos ? <Badge tone="blue">{r.eletricos}</Badge> : <span className="muted">Não indicado</span>) },
+          { label: "Páginas", align: "right", render: (r) => r.paginas || "Não indicado" },
         ]}
       />
     </>
@@ -94,13 +95,14 @@ export function PesquisaDocumentos() {
         rows={rows}
         rowKey={(d) => d.id}
         pageSize={15}
-        onRow={(d) => router.push(perfil === ELE ? oeHref(perfil, d.oe) : `/oe/${d.oe}?tab=dossier`)}
+        onRow={(d) => router.push(d.quadroId ? `/quadros?q=${d.quadroId}` : perfil === ELE ? oeHref(perfil, d.oe) : `/oe/${d.oe}?tab=dossier`)}
         columns={[
           { label: "Documento", render: (d) => <span className="cell-main"><span className="doc-icon small">PDF</span><span><b>{d.descricao}</b><small className="block">{d.nome}</small></span></span> },
           { label: "OE", render: (d) => `OE ${d.oe}` },
           { label: "NF", render: (d) => (d.nf ? `NF ${d.nf}` : <span className="muted">Geral</span>) },
           { label: "Categoria", render: (d) => <Badge>{d.categoria}</Badge> },
-          { label: "Páginas", align: "right", render: (d) => d.paginas },
+          { label: "Páginas", align: "right", render: (d) => d.paginas || "Não indicado" },
+          { label: "Ficheiro", render: (d) => <PdfLink href={d.pdfUrl} /> },
           { label: "Data", align: "right", render: (d) => date(d.data) },
         ]}
       />

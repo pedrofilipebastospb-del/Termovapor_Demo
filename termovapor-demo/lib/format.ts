@@ -8,13 +8,12 @@ export const money = (v: number) =>
 export const num = (v: number, decimals = 1) =>
   new Intl.NumberFormat("pt-PT", { useGrouping: "always", maximumFractionDigits: decimals }).format(v);
 
-export const date = (v?: string) => (v ? v.slice(0, 10).split("-").reverse().join("/") : "—");
+export const date = (v?: string) => (v ? v.slice(0, 10).split("-").reverse().join("/") : "Não indicado");
 
-export const dateTime = (v?: string) => (v ? `${date(v)} ${v.slice(11, 16)}` : "—");
+export const dateTime = (v?: string) => (v ? `${date(v)} ${v.slice(11, 16)}` : "Não indicado");
 
-// A demo trabalha com uma data de referência fixa para que os prazos e os
-// indicadores sejam sempre coerentes com os dados sintéticos.
-export const HOJE = "2026-10-14";
+// Data atual em Portugal para prazos e novas operações locais.
+export const HOJE = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Lisbon" }).format(new Date());
 
 export const nowIso = () => {
   const d = new Date();
@@ -27,6 +26,7 @@ export const daysUntil = (iso: string, from = HOJE) =>
   Math.round((new Date(`${iso.slice(0, 10)}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime()) / 86_400_000);
 
 export const prazoLabel = (iso: string) => {
+  if (!iso || !Number.isFinite(daysUntil(iso))) return "Prazo por definir";
   const d = daysUntil(iso);
   if (d < 0) return `${Math.abs(d)} ${Math.abs(d) === 1 ? "dia" : "dias"} em atraso`;
   if (d === 0) return "Termina hoje";

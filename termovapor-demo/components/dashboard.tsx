@@ -56,7 +56,7 @@ function filaAtencao(state: State, perfil: Perfil, verComercial: boolean): Item[
       if (o.estado === "Aguarda material") motivos.push("Aguarda material");
       if (faltas) motivos.push(`${faltas} ${faltas === 1 ? "artigo com falta real" : "artigos com falta real"}`);
       if (!o.responsavel) motivos.push("Sem responsável atribuído");
-      if (o.etapas.length <= 2) motivos.push("Pedido novo por tratar");
+      if (!o.importada && o.etapas.length <= 2) motivos.push("Pedido novo por tratar");
       if (motivos.length) {
         const q = state.quadros.find((x) => x.id === o.quadroId);
         out.push({ key: `oif-${o.numero}`, tipo: "OIF", ref: o.numero, titulo: q?.descricao ?? "", motivos, estado: o.estado, data: o.prazo, href: `/oif/${o.numero}`, peso: atraso ? 0 : faltas || o.estado === "Aguarda material" ? 1 : 2, atraso, material: o.estado === "Aguarda material" || faltas > 0 });
@@ -126,7 +126,7 @@ export function Dashboard() {
         {perfil === ELE && <Metric label="Faltas reais de material" value={faltas} hint="Depois de reservas e stock livre" icon={<PackageX size={16} />} accent={faltas ? "danger" : "positive"} onClick={() => router.push("/artigos?vista=faltas")} />}
       </div>
 
-      <div className="grid-main">
+      <div className="overview-work">
         <section>
           <div className="section-top">
             <div>
@@ -178,90 +178,49 @@ export function Dashboard() {
           </div>
         </section>
 
-        <div className="stack">
-          <Panel title="Próximos prazos" actions={<CalendarDays size={16} className="muted" />}>
-            <div className="activity-list">
-              {prazos.map((p) => (
-                <Link key={p.ref} href={p.href}>
-                  <span style={{ minWidth: 0 }}>
-                    <b className="mono">{p.ref}</b>
-                    <small>{p.sub}</small>
-                  </span>
-                  <time>{date(p.data)}</time>
-                </Link>
-              ))}
-              {!prazos.length && <p className="muted" style={{ padding: "16px 0", fontSize: 12 }}>Sem prazos futuros.</p>}
-            </div>
-          </Panel>
-          <Panel title="Trabalhos por estado" subtitle="Estado registado, incluindo trabalhos concluídos">
-            <div className="panel-body state-groups">
-              {perfil !== ELE && (
-                <div>
-                  <span className="tag">OE</span>
-                  {OE_ESTADOS.map((e) => ({ e, n: state.oes.filter((o) => o.estado === e).length }))
-                    .filter((x) => x.n)
-                    .map((x) => (
-                      <div className="state-count" key={x.e}>
-                        <span>{x.e}</span>
-                        <b>{x.n}</b>
-                      </div>
-                    ))}
-                </div>
-              )}
-              {perfil !== ENG && (
-                <div>
-                  <span className="tag">OIF</span>
-                  {OIF_ESTADOS.map((e) => ({ e, n: state.oifs.filter((o) => o.estado === e).length }))
-                    .filter((x) => x.n)
-                    .map((x) => (
-                      <div className="state-count" key={x.e}>
-                        <span>{x.e}</span>
-                        <b>{x.n}</b>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </Panel>
-          <Panel title="Acompanhamento elétrico">
-            <div className="activity-list">
-              {perfil !== ELE && (
-                <Link href="/pedidos">
-                  <span>
-                    <b>{state.pedidos.filter((p) => p.estado === "Não enviado").length} pedidos por enviar ao OIF</b>
-                    <small>Folhas elétricas em preparação na OE</small>
-                  </span>
-                  <ArrowRight size={14} />
-                </Link>
-              )}
-              <Link href="/pedidos">
-                <span>
-                  <b>{state.pedidos.filter((p) => p.estado !== "Não enviado" && p.estado !== "Devolvido à OE").length} pedidos por devolver</b>
-                  <small>Recebidos pelo OIF, ainda sem definição final</small>
-                </span>
-                <ArrowRight size={14} />
+      </div>
+
+      <div className="overview-summaries">
+        <Panel className="overview-card overview-deadlines" title="Próximos prazos" subtitle="Entregas previstas dos trabalhos ativos" actions={<CalendarDays size={16} className="muted" />}>
+          <div className="deadline-list">
+            {prazos.map((p) => (
+              <Link key={p.ref} href={p.href}>
+                <time dateTime={p.data} className="deadline-date"><b>{p.data.slice(8, 10)}</b><span>{new Intl.DateTimeFormat("pt-PT", { month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${p.data}T12:00:00Z`))}</span></time>
+                <span className="deadline-work"><b className="mono">{p.ref}</b><small>{p.sub}</small></span>
+                <ArrowRight size={14} aria-hidden />
               </Link>
-              {perfil !== ENG && (
-                <Link href="/quadros">
-                  <span>
-                    <b>{state.quadros.reduce((n, q) => n + linhasSemArtigo(q).length, 0)} linhas SEE por rever</b>
-                    <small>Materiais extraídos sem artigo associado</small>
-                  </span>
-                  <ArrowRight size={14} />
-                </Link>
-              )}
-              {perfil !== ENG && (
-                <Link href="/encomendas">
-                  <span>
-                    <b>{state.encomendas.filter((e) => !["Recebida", "Cancelada"].includes(e.estado)).length} encomendas em aberto</b>
-                    <small>Material por receber dos fornecedores</small>
-                  </span>
-                  <ArrowRight size={14} />
-                </Link>
-              )}
-            </div>
-          </Panel>
-        </div>
+            ))}
+            {!prazos.length && <p className="summary-empty">Sem prazos futuros.</p>}
+          </div>
+        </Panel>
+        <Panel className="overview-card overview-states" title="Trabalhos por estado" subtitle="Inclui trabalhos concluídos">
+          <div className="summary-state-groups">
+            {[
+              ...(perfil !== ELE ? [{ key: "OE", label: "Engenharia", rows: OE_ESTADOS.map((e) => ({ e, n: state.oes.filter((o) => o.estado === e).length })) }] : []),
+              ...(perfil !== ENG ? [{ key: "OIF", label: "Fabrico elétrico", rows: OIF_ESTADOS.map((e) => ({ e, n: state.oifs.filter((o) => o.estado === e).length })) }] : []),
+            ].map((group) => (
+              <section key={group.key} aria-label={`Estados ${group.key}`}>
+                <header><b>{group.key}</b><span>{group.label}</span></header>
+                {group.rows.filter((x) => x.n).map((x) => <div className="summary-state-row" key={x.e}><span>{x.e}</span><b>{x.n}</b></div>)}
+                {!group.rows.some((x) => x.n) && <p className="summary-empty">Sem trabalhos.</p>}
+              </section>
+            ))}
+          </div>
+        </Panel>
+        <Panel className="overview-card overview-electrical" title="Acompanhamento elétrico" subtitle="Pedidos, materiais e compras">
+          <div className="electrical-summary-list">
+            {[
+              ...(perfil !== ELE ? [{ href: "/pedidos", count: state.pedidos.filter((p) => p.estado === "Não enviado").length, title: "Por enviar ao OIF", description: "Folhas em preparação na OE" }] : []),
+              { href: "/pedidos", count: state.pedidos.filter((p) => p.estado !== "Não enviado" && p.estado !== "Devolvido à OE").length, title: "Pedidos por devolver", description: "Aguardam definição final do OIF" },
+              ...(perfil !== ENG ? [
+                { href: "/quadros", count: state.quadros.reduce((n, q) => n + linhasSemArtigo(q).length, 0), title: "Linhas SEE por rever", description: "Materiais sem artigo associado" },
+                { href: "/encomendas", count: state.encomendas.filter((e) => !["Recebida", "Cancelada"].includes(e.estado)).length, title: "Encomendas em aberto", description: "Material por receber" },
+              ] : []),
+            ].map((item) => (
+              <Link key={item.title} href={item.href}><b className={`summary-number ${item.count ? "has-items" : ""}`}>{item.count}</b><span><b>{item.title}</b><small>{item.description}</small></span><ArrowRight size={14} aria-hidden /></Link>
+            ))}
+          </div>
+        </Panel>
       </div>
     </>
   );

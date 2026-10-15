@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Termovapor · Plataforma operacional", template: "%s · Termovapor" },
-  description: "Demonstração da plataforma operacional Termovapor: Ordens de Execução, Números de Fabrico e OIF Elétrico, com dados sintéticos.",
+  description: "Demonstração da plataforma operacional Termovapor: Ordens de Execução, Números de Fabrico e OIF Elétrico, com dados reais importados das bases fornecidas.",
   icons: { icon: "/favicon.svg" },
   robots: { index: false, follow: false, nocache: true },
 };

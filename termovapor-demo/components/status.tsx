@@ -61,6 +61,7 @@ export function PrioridadeBadge({ prioridade }: { prioridade: string }) {
 
 // Linha de tempo da OIF: da receção do pedido à devolução à OE.
 export function FlowStepper({ oif, compact = false }: { oif: OIF; compact?: boolean }) {
+  if (oif.importada) return <div><StatusBadge estado={oif.estado} /><p className="muted" style={{ marginTop: 8 }}>Estado registado na base OIF. As alterações com data estão disponíveis no histórico.</p></div>;
   return (
     <ol className={`flow ${compact ? "compact" : ""}`}>
       {ETAPAS.map((nome, i) => {

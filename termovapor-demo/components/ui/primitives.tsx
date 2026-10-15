@@ -170,7 +170,7 @@ export function DetailList({ items }: { items: [string, ReactNode][] }) {
       {items.map(([k, v]) => (
         <div key={k}>
           <dt>{k}</dt>
-          <dd>{v === "" || v === undefined || v === null ? "—" : v}</dd>
+          <dd>{v === "" || v === undefined || v === null ? "Não indicado" : v}</dd>
         </div>
       ))}
     </dl>

@@ -12,7 +12,7 @@ export const artigoMap = (state: State) => new Map(state.artigos.map((a) => [a.i
 
 export const livre = (a: Artigo) => Math.max(0, a.stock - a.reservado);
 
-export const stockCritico = (a: Artigo) => livre(a) < a.minimo;
+export const stockCritico = (a: Artigo) => a.stockRegistado !== false && livre(a) < a.minimo;
 
 export function necessidades(quadro: Quadro | undefined, quantidade = 1) {
   const map = new Map<string, number>();
@@ -36,12 +36,12 @@ export type Cobertura = {
 export function cobertura(state: State, oif: OIF): Cobertura[] {
   const arts = artigoMap(state);
   const rows: Cobertura[] = [];
-  for (const [artigoId, necessario] of necessidades(quadroDe(state, oif), oif.quantidade)) {
+  for (const [artigoId, necessario] of (oif.materiaisConfirmados ? new Map(oif.materiaisConfirmados.map((m) => [m.artigoId, m.quantidade])) : necessidades(quadroDe(state, oif), oif.quantidade))) {
     const artigo = arts.get(artigoId);
     if (!artigo) continue;
     const reservado = oif.reservas[artigoId] ?? 0;
     const pendente = Math.max(0, necessario - reservado);
-    const disponivel = livre(artigo);
+    const disponivel = artigo.stockRegistado === false ? 0 : livre(artigo);
     const porReservar = Math.min(pendente, disponivel);
     rows.push({
       artigo,
@@ -49,7 +49,7 @@ export function cobertura(state: State, oif: OIF): Cobertura[] {
       reservado,
       livre: disponivel,
       porReservar,
-      falta: OIF_ATIVA(oif) ? pendente - porReservar : 0,
+      falta: OIF_ATIVA(oif) && artigo.stockRegistado !== false ? pendente - porReservar : 0,
       custo: oif.custos[artigoId] ?? artigo.custo,
     });
   }
@@ -77,6 +77,8 @@ export function pendenciasOIF(state: State, oif: OIF): string[] {
   else if (!quadro.linhas.length) out.push("Extrair a lista de materiais do PDF SEE.");
   const sem = linhasSemArtigo(quadro).length;
   if (sem) out.push(`${sem} ${sem === 1 ? "linha de material sem artigo associado" : "linhas de material sem artigo associado"}.`);
+  const desconhecidos = cobertura(state, oif).filter((c) => c.artigo.stockRegistado === false);
+  if (desconhecidos.length) out.push(`${desconhecidos.length} artigos sem registo de stock. Confirmar disponibilidade.`);
   const faltas = cobertura(state, oif).filter((c) => c.falta > 0);
   if (faltas.length) out.push(`${faltas.length} ${faltas.length === 1 ? "artigo com falta real" : "artigos com falta real"} de stock.`);
   const porReservar = cobertura(state, oif).filter((c) => c.porReservar > 0).length;
