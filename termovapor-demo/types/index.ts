@@ -1,6 +1,6 @@
 // Modelo de dados da demonstração Termovapor.
 // Reflete a estrutura funcional das aplicações OE (Ordens de Execução) e
-// OIF Elétrico, simplificada para uma demo frontend com dados sintéticos.
+// OIF Elétrico, adaptada à interface com dados reais importados.
 
 export type OEEstado =
   | "Nova"
@@ -63,6 +63,8 @@ export type NF = {
   estado: NFEstado;
   principal?: string; // NF principal, quando é sub-NF
   campos: Record<string, string>;
+  camposOriginais?: { key: string; label: string; section: string; electrical: boolean; type: "text" }[];
+  associados?: string[];
 };
 
 export type DocCategoria =
@@ -77,13 +79,17 @@ export type DocCategoria =
 
 export type Documento = {
   id: string;
-  oe: number;
+  oe: number | string;
   nf?: string;
   categoria: DocCategoria;
   descricao: string;
   nome: string;
   data: string;
   paginas: number;
+  pdfUrl?: string | null;
+  disponivel?: boolean;
+  quadroId?: string;
+  pedidoCodigo?: string;
 };
 
 export type PedidoEstado = "Não enviado" | "Enviado ao OIF" | "Em execução" | "Devolvido à OE";
@@ -93,6 +99,8 @@ export type PedidoEletrico = {
   oe: number;
   titulo: string;
   quadroNf: string;
+  quadroNfOIF?: string;
+  estadoOIFOrigem?: string;
   nfs: string[];
   hmi: "Com HMI" | "Sem HMI" | "A definir";
   alimentacao: string;
@@ -117,6 +125,7 @@ export type Artigo = {
   categoria: string;
   unidade: string;
   stock: number;
+  stockRegistado?: boolean;
   reservado: number;
   minimo: number;
   localizacao: string;
@@ -138,12 +147,13 @@ export type Quadro = {
   id: string;
   codigo: string;
   descricao: string;
-  oe: number;
+  oe: number | string;
   nf: string;
   cliente: string;
   esquema: string;
   revisao: string;
   pdf: string;
+  pdfUrl?: string | null;
   extraidoEm?: string;
   linhas: LinhaMaterial[];
 };
@@ -168,12 +178,15 @@ export type OIF = {
   numero: string;
   quadroId: string;
   pedido: string;
-  oe: number;
+  oe: number | string;
   nf: string;
   quantidade: number;
   estado: OIFEstado;
   responsavel: string;
   prazo: string;
+  prazoOriginal?: string;
+  importada?: boolean;
+  materiaisConfirmados?: { artigoId: string; quantidade: number }[];
   criadaEm: string;
   etapas: Etapa[];
   reservas: Record<string, number>; // artigoId -> quantidade reservada

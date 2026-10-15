@@ -1,4 +1,5 @@
 "use client";
+import { PdfLink } from "./pdf-link";
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, FileJson, Send } from "lucide-react";
@@ -17,8 +18,9 @@ export function estadoOE(p: PedidoEletrico) {
   return "Enviada ao OIF";
 }
 export function estadoOIF(p: PedidoEletrico, oif?: OIF) {
-  if (p.estado === "Não enviado") return "—";
+  if (p.estado === "Não enviado") return "Não indicado";
   if (p.estado === "Devolvido à OE" || oif?.estado === "Concluída") return "Devolvida à OE";
+  if (p.estadoOIFOrigem) return p.estadoOIFOrigem;
   if (!oif || oif.etapas.length <= 2) return "Recebida";
   return "Em elaboração";
 }
@@ -65,7 +67,7 @@ function PedidoDrawer({ pedido, onClose }: { pedido: PedidoEletrico; onClose: ()
         <DetailList
           items={[
             ["NF do quadro", `NF ${pedido.quadroNf}`],
-            ["Equipamentos abrangidos", pedido.nfs.map((n) => `NF ${n}`).join(", ") || "—"],
+            ["Equipamentos abrangidos", pedido.nfs.map((n) => `NF ${n}`).join(", ") || "Não indicado"],
             ["Configuração", pedido.nfs.length > 1 ? "Quadro comum" : "Quadro individual"],
             ["Interface", pedido.hmi],
             ["Alimentação", pedido.alimentacao],
@@ -78,6 +80,7 @@ function PedidoDrawer({ pedido, onClose }: { pedido: PedidoEletrico; onClose: ()
             ["Definição final do OIF", pedido.definicaoFinal],
           ]}
         />
+        {state.documentos.some((d) => d.pedidoCodigo === pedido.codigo) && <section aria-label="Documentos do pedido" style={{ marginTop: 20 }}><h3 style={{ fontSize: 12 }}>Documentos do pedido</h3>{state.documentos.filter((d) => d.pedidoCodigo === pedido.codigo).map((d) => <div className="doc-row" key={d.id}><span><b>{d.descricao}</b><small>{d.nome}</small></span><PdfLink href={d.pdfUrl} /></div>)}</section>}
         <h3 style={{ margin: "20px 0 8px", fontSize: 12 }} className="title-row">
           <FileJson size={15} /> Conteúdo enviado ao OIF
         </h3>
@@ -167,7 +170,7 @@ export function Pedidos({ abrir }: { abrir?: string }) {
           { label: "NF do quadro", render: (p) => <span className="mono">{p.quadroNf}</span> },
           { label: "Rev.", align: "center", render: (p) => `R${String(p.revisao).padStart(2, "0")}` },
           { label: "Estado na OE", render: (p) => <StatusBadge estado={estadoOE(p)} /> },
-          { label: "Estado no OIF", render: (p) => (estadoOIF(p, oifDe(state, p)) === "—" ? <span className="muted">—</span> : <StatusBadge estado={estadoOIF(p, oifDe(state, p))} />) },
+          { label: "Estado no OIF", render: (p) => (estadoOIF(p, oifDe(state, p)) === "Não indicado" ? <span className="muted">Não indicado</span> : <StatusBadge estado={estadoOIF(p, oifDe(state, p))} />) },
           { label: "OIF / fase", render: (p) => { const o = oifDe(state, p); return o ? <span><b>{o.numero}</b><small className="block">{o.estado}</small></span> : <span className="muted">Sem OIF</span>; } },
         ]}
       />

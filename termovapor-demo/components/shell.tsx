@@ -25,7 +25,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`brand ${compact ? "compact" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/termovapor-logo.png" alt="Termovapor — Indústria de Caldeiras, S.A." />
+      <img src="/termovapor-logo.png" alt="Termovapor · Indústria de Caldeiras, S.A." />
     </div>
   );
 }
@@ -234,7 +234,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main>
-          {seccoes.length > 1 && !util && (
+          {seccoes.length > 1 && !util && seccoes.some((s) => s.href === path) && (
             <nav className="area-tabs" aria-label={area?.label}>
               {seccoes.map((s) => (
                 <Link key={s.href} href={s.href} className={seccao?.href === s.href ? "active" : ""}>
@@ -245,10 +245,6 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
           {podeAceder(perfil, path) ? children : <SemAcesso />}
         </main>
-        <footer className="app-footer">
-          <span>Termovapor — Indústria de Caldeiras, S.A. · Gestão integrada OE + OIF</span>
-          <span>Sessão: {user} · {perfilLabel}</span>
-        </footer>
       </div>
       {pesquisa && <PesquisaGlobal onClose={() => setPesquisa(false)} />}
     </div>

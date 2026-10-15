@@ -2,7 +2,7 @@
 // atual e devolvem um novo estado (mais, quando útil, o identificador criado).
 // O registo de auditoria acompanha cada operação, como nas aplicações originais.
 import type { Artigo, Auditoria, Documento, NF, OE, OIF, PedidoEletrico, Quadro, State } from "@/types";
-import { ETAPAS, extracaoSimulada } from "@/data/eletrico";
+import { ETAPAS } from "@/data/eletrico";
 import { cobertura, linhasSemArtigo, necessidades, nextNF, nextSubNF, quadroDe } from "./engine";
 import { HOJE, nowIso, uid } from "./format";
 
@@ -34,7 +34,7 @@ export function criarOE(state: State, dados: NovaOE, user: string): [State, numb
   const numero = state.sequencias.oe + 1;
   const oe: OE = { ...dados, numero, dataCriacao: HOJE, estado: "Nova" };
   let next: State = { ...state, oes: [oe, ...state.oes], sequencias: { ...state.sequencias, oe: numero } };
-  next = log(next, { entidade: "OE", referencia: `OE ${numero}`, acao: "Criação", detalhe: `${dados.cliente} — ${dados.descricao}`, utilizador: user });
+  next = log(next, { entidade: "OE", referencia: `OE ${numero}`, acao: "Criação", detalhe: `${dados.cliente} · ${dados.descricao}`, utilizador: user });
   return [next, numero];
 }
 
@@ -60,7 +60,7 @@ export function adicionarNF(state: State, dados: NovoNF, user: string): [State, 
   }
   const nf: NF = { numero, oe: dados.oe, tipo: dados.tipo, registoTipo: dados.registoTipo, designacao: dados.designacao, estado: "Definição", principal: dados.principal, campos: {} };
   next = { ...next, nfs: [...next.nfs, nf] };
-  next = log(next, { entidade: "NF", referencia: `NF ${numero}`, acao: "Atribuição", detalhe: `OE ${dados.oe} — ${dados.tipo}: ${dados.designacao}`, utilizador: user });
+  next = log(next, { entidade: "NF", referencia: `NF ${numero}`, acao: "Atribuição", detalhe: `OE ${dados.oe} · ${dados.tipo}: ${dados.designacao}`, utilizador: user });
   return [next, numero];
 }
 
@@ -125,17 +125,15 @@ export function enviarPedido(state: State, codigo: string, user: string): [State
 export function associarPDF(state: State, quadroId: string, user: string): State {
   const q = state.quadros.find((x) => x.id === quadroId);
   if (!q) return state;
-  const pdf = `${q.codigo}_${q.revisao}.pdf`;
-  return log(patchQuadro(state, quadroId, (x) => ({ ...x, pdf })), { entidade: "Quadro", referencia: q.codigo, acao: "PDF SEE associado", detalhe: pdf, utilizador: user });
+  return state; // Association requires a real source file.
+
 }
 
 export function extrairMateriais(state: State, quadroId: string, user: string): State {
   const q = state.quadros.find((x) => x.id === quadroId);
   if (!q) return state;
-  const linhas = extracaoSimulada().map((l) => ({ ...l, id: uid("l") }));
-  const sem = linhas.filter((l) => !l.artigoId).length;
-  const next = patchQuadro(state, quadroId, (x) => ({ ...x, linhas, extraidoEm: HOJE }));
-  return log(next, { entidade: "Quadro", referencia: q.codigo, acao: "Extração da lista de equipamentos", detalhe: `${linhas.length} linhas extraídas · ${sem} não cadastradas`, utilizador: user });
+  return state; // PDF extraction requires an actual imported source file.
+
 }
 
 export function associarArtigo(state: State, quadroId: string, linhaId: string, artigoId: string, user: string): State {
@@ -145,15 +143,15 @@ export function associarArtigo(state: State, quadroId: string, linhaId: string, 
     ...x,
     linhas: x.linhas.map((l) => (l.id === linhaId ? { ...l, artigoId, descricaoExtraida: l.descricaoExtraida || art?.descricao || "", fabricante: l.fabricante || art?.marca || "" } : l)),
   }));
-  return log(next, { entidade: "Quadro", referencia: q?.codigo ?? "", acao: "Artigo associado", detalhe: `${art?.codigo} — ${art?.descricao}`, utilizador: user });
+  return log(next, { entidade: "Quadro", referencia: q?.codigo ?? "", acao: "Artigo associado", detalhe: `${art?.codigo} · ${art?.descricao}`, utilizador: user });
 }
 
 export function criarArtigoDeLinha(state: State, quadroId: string, linhaId: string, dados: Pick<Artigo, "descricao" | "marca" | "referencia" | "categoria" | "custo">, user: string): State {
   const seq = Math.max(...state.artigos.map((a) => Number(a.codigo.slice(2)) || 0)) + 1;
   const codigo = `EL${String(seq).padStart(5, "0")}`;
-  const artigo: Artigo = { id: uid("a"), codigo, codigoInterno: `TV-${codigo.slice(2)}`, unidade: "un", stock: 0, reservado: 0, minimo: 0, localizacao: "—", ...dados };
+  const artigo: Artigo = { id: uid("a"), codigo, codigoInterno: `TV-${codigo.slice(2)}`, unidade: "un", stock: 0, reservado: 0, minimo: 0, localizacao: "Não indicado", ...dados };
   let next: State = { ...state, artigos: [...state.artigos, artigo] };
-  next = log(next, { entidade: "Artigo", referencia: codigo, acao: "Cadastro a partir do PDF", detalhe: `${dados.referencia} — ${dados.descricao}`, utilizador: user });
+  next = log(next, { entidade: "Artigo", referencia: codigo, acao: "Cadastro a partir do PDF", detalhe: `${dados.referencia} · ${dados.descricao}`, utilizador: user });
   return associarArtigo(next, quadroId, linhaId, artigo.id, user);
 }
 
@@ -165,11 +163,11 @@ export function atualizarArtigo(state: State, id: string, patch: Partial<Artigo>
 
 export function ajustarStock(state: State, id: string, novoStock: number, motivo: string, user: string): State {
   const art = state.artigos.find((a) => a.id === id);
-  if (!art || novoStock === art.stock) return state;
+  if (!art || (novoStock === art.stock && art.stockRegistado !== false)) return state;
   const diff = novoStock - art.stock;
   const next: State = {
     ...state,
-    artigos: state.artigos.map((a) => (a.id === id ? { ...a, stock: novoStock } : a)),
+    artigos: state.artigos.map((a) => (a.id === id ? { ...a, stock: novoStock, stockRegistado: true } : a)),
     movimentos: [{ id: uid("mv"), artigoId: id, tipo: "Ajuste", quantidade: Math.abs(diff), documento: "AJ-MANUAL", data: HOJE, observacoes: `${diff > 0 ? "+" : "−"}${Math.abs(diff)} · ${motivo || "Ajuste manual"}` }, ...state.movimentos],
   };
   return log(next, { entidade: "Artigo", referencia: art.codigo, acao: "Ajuste de stock", detalhe: `${art.stock} → ${novoStock}${motivo ? ` · ${motivo}` : ""}`, utilizador: user });
@@ -224,7 +222,7 @@ export function reservarMateriais(state: State, numero: string, user: string, op
   const novos = rows
     .filter((r) => r.porReservar > 0)
     .map((r) => ({ id: uid("mv"), artigoId: r.artigo.id, tipo: "Reserva" as const, quantidade: r.porReservar, documento: numero, data: HOJE, observacoes: "Reserva para OIF" }));
-  const faltas = rows.filter((r) => r.falta > 0).length;
+  const faltas = rows.filter((r) => r.falta > 0 || r.artigo.stockRegistado === false).length;
   let next: State = { ...state, artigos, movimentos: [...novos, ...state.movimentos] };
   next = patchOIF(next, numero, (o) => {
     const base = { ...o, reservas };
@@ -270,10 +268,7 @@ export function devolverOE(state: State, numero: string, definicaoFinal: string,
     movimentos: [...saidas, ...state.movimentos],
     pedidos: state.pedidos.map((p) => (p.codigo === oif.pedido ? { ...p, estado: "Devolvido à OE", revisao, dataDevolucao: HOJE, definicaoFinal } : p)),
     nfs: state.nfs.map((n) => (n.numero === oif.nf ? { ...n, estado: "Concluído" } : n)),
-    documentos: [
-      { id: uid("doc"), oe: oif.oe, nf: oif.nf, categoria: "Elétrica / automação", descricao: `Esquema elétrico devolvido pelo OIF (R${String(revisao).padStart(2, "0")})`, nome: `${oif.pedido}_R${String(revisao).padStart(2, "0")}.pdf`, data: HOJE, paginas: 18 + (quadro?.linhas.length ?? 0) % 9 },
-      ...state.documentos,
-    ],
+    documentos: state.documentos,
   };
   next = patchOIF(next, numero, (o) => etapa({ ...o, estado: "Concluída", reservas: {} }, "Devolvida à OE", user, definicaoFinal));
   return log(next, { entidade: "OIF", referencia: numero, acao: "Concluída e devolvida à OE", detalhe: `Pedido ${oif.pedido} · revisão R${String(revisao).padStart(2, "0")}`, utilizador: user });
@@ -309,7 +304,7 @@ export function receberEncomenda(state: State, numero: string, quantidades: Reco
     ...state,
     artigos: state.artigos.map((a) => {
       const l = linhas.find((x) => x.artigoId === a.id);
-      return l ? { ...a, stock: a.stock + l.quantidade } : a;
+      return l ? { ...a, stock: a.stock + l.quantidade, stockRegistado: true } : a;
     }),
     movimentos: [...entradas, ...state.movimentos],
     rececoes: [{ numero: rc, encomenda: numero, data: HOJE, guia, linhas }, ...state.rececoes],
@@ -329,7 +324,7 @@ export function encomendarFaltas(state: State, numero: string, user: string): [S
   const next: State = {
     ...state,
     encomendas: [
-      { numero: enc, fornecedor: "F002", oif: numero, data: HOJE, previsao: "2026-10-24", estado: "Rascunho", linhas: faltas.map((f) => ({ artigoId: f.artigo.id, quantidade: f.falta, preco: f.artigo.custo, recebido: 0 })) },
+      { numero: enc, fornecedor: state.fornecedores[0]?.codigo ?? "", oif: numero, data: HOJE, previsao: "2026-10-24", estado: "Rascunho", linhas: faltas.map((f) => ({ artigoId: f.artigo.id, quantidade: f.falta, preco: f.artigo.custo, recebido: 0 })) },
       ...state.encomendas,
     ],
     sequencias: { ...state.sequencias, encomenda: seq },

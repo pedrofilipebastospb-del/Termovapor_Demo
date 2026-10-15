@@ -21,7 +21,7 @@ export function Configuracao() {
   return (
     <>
       <PageHeader eyebrow="Administração" title="Configuração" description="Perfis de acesso, sequências de numeração, estados e dados da plataforma." />
-      <Panel title="Perfis de acesso" subtitle={`Sessão atual: ${user} · ${perfil}`}>
+      <Panel title="Perfis de acesso" subtitle={`Sessão atual: ${user === perfil ? perfil : `${user} · ${perfil}`}`}>
         <Table
           rows={ACESSOS}
           rowKey={(r) => r[0]}
@@ -36,7 +36,7 @@ export function Configuracao() {
       <div className="grid-two">
         <Panel title="Contas">
           <div className="panel-body">
-            <DetailList items={CONTAS.map((c) => [c.perfil, `${c.nome} · utilizador “${c.utilizador}”`] as [string, string])} />
+            <DetailList items={CONTAS.map((c) => [c.perfil, `${c.nome ? `${c.nome} · ` : ""}utilizador “${c.utilizador}”`] as [string, string])} />
             <Note tone="amber">Contas locais por perfil. Antes de uso operacional, passam a utilizadores individuais autenticados no servidor.</Note>
           </div>
         </Panel>
@@ -71,13 +71,13 @@ export function Configuracao() {
         <Panel title="Origem dos dados">
           <div className="panel-body">
             <Note tone="amber" icon={<Database size={15} />}>
-              Dados de exemplo. Não há ligação ao SAGE, às bases OE/OIF nem à rede interna.
+              Dados reais importados das bases OE e OIF fornecidas. As alterações nesta aplicação ficam neste navegador e não alteram as bases originais.
             </Note>
             <DetailList
               items={[
-                ["Base de dados OE (oe_v1.db)", <Badge key="1">Não ligada</Badge>],
-                ["Base de dados OIF (oif.db)", <Badge key="2">Não ligada</Badge>],
-                ["Exportações SAGE", <Badge key="3">Por importação</Badge>],
+                ["Base de dados OE (oe_v1.db)", <Badge key="1">Importada: {state.oes.length} OE · {state.nfs.length} NF</Badge>],
+                ["Base de dados OIF (oif.db)", <Badge key="2">Importada: {state.oifs.length} OIF · {state.artigos.length} artigos</Badge>],
+                ["Exportações SAGE", <Badge key="3">{state.clientes.length} clientes</Badge>],
                 ["Alterações nesta sessão", alterado ? <Badge key="5" tone="blue">Guardadas neste navegador</Badge> : <Badge key="5" tone="green">Dados iniciais</Badge>],
               ]}
             />

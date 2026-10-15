@@ -26,9 +26,9 @@ export const CALDEIRA_MODELOS: Record<string, string[]> = {
 const ELETRICA_COMUM: FieldDef[] = [
   { section: "Quadro elétrico", key: "el_hmi", label: "Interface do quadro", type: "combo", options: ["Com HMI", "Sem HMI"], electrical: true },
   { section: "Quadro elétrico", key: "el_alimentacao", label: "Alimentação (V / fases / Hz)", type: "text", electrical: true },
-  { section: "Quadro elétrico", key: "el_motores", label: "Motores associados — identificação / potência (kW)", type: "multiline", electrical: true },
+  { section: "Quadro elétrico", key: "el_motores", label: "Motores associados · identificação / potência (kW)", type: "multiline", electrical: true },
   { section: "Quadro elétrico", key: "el_sondas_qtd", label: "Número de sondas", type: "text", electrical: true },
-  { section: "Quadro elétrico", key: "el_sondas", label: "Sondas — identificação / objetivo", type: "multiline", electrical: true },
+  { section: "Quadro elétrico", key: "el_sondas", label: "Sondas · identificação / objetivo", type: "multiline", electrical: true },
   { section: "Quadro elétrico", key: "el_oif", label: "OIF associada", type: "text", electrical: true },
   { section: "Quadro elétrico", key: "el_obs", label: "Observações elétricas / automação", type: "multiline", electrical: true },
 ];
@@ -44,8 +44,8 @@ export const TEMPLATES: Record<string, FieldDef[]> = {
     { section: "Bomba de água", key: "bomba_marca", label: "Marca", type: "combo", options: ["Speck", "Wanner", "Grundfos", "Outra"] },
     { section: "Bomba de água", key: "bomba_modelo", label: "Modelo", type: "text" },
     { section: "Bomba de água", key: "bomba_qtd", label: "Quantidade de bombas", type: "text" },
-    { section: "Bomba de água", key: "bomba_motor_kw", label: "Motor — potência (kW)", type: "text" },
-    { section: "Bomba de água", key: "bomba_arranque", label: "Motor — tipo de arranque", type: "combo", options: ["Direto", "Estrela-triângulo", "Variador", "Outro"] },
+    { section: "Bomba de água", key: "bomba_motor_kw", label: "Motor · potência (kW)", type: "text" },
+    { section: "Bomba de água", key: "bomba_arranque", label: "Motor · tipo de arranque", type: "combo", options: ["Direto", "Estrela-triângulo", "Variador", "Outro"] },
     { section: "Queimador", key: "queimador_modelo", label: "Modelo do queimador", type: "text" },
     { section: "Queimador", key: "queimador_obs", label: "Observações", type: "multiline" },
     { section: "Segurança", key: "valvula_seguranca", label: "Válvula de segurança", type: "yesno", options: SIM_NAO },

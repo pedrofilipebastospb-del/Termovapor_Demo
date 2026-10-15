@@ -103,7 +103,7 @@ export function NovaOEModal({ onClose }: { onClose: () => void }) {
     router.push(`/oe/${numero}`);
   };
   return (
-    <Modal title={`Nova Ordem de Execução — OE ${numero}`} subtitle="O número é atribuído automaticamente pela sequência global." onClose={onClose} wide>
+    <Modal title={`Nova Ordem de Execução · OE ${numero}`} subtitle="O número é atribuído automaticamente pela sequência global." onClose={onClose} wide>
       <div className="modal-body">
         <div className="form-section">Cliente</div>
         <Field label="Cliente (pesquisa na listagem SAGE)" hint="Ao escolher, o n.º SAGE e a morada são preenchidos automaticamente.">
@@ -111,10 +111,10 @@ export function NovaOEModal({ onClose }: { onClose: () => void }) {
         </Field>
         <div className="form-grid">
           <Field label="N.º SAGE">
-            <input readOnly value={cliente?.codigo ?? ""} placeholder="—" />
+            <input readOnly value={cliente?.codigo ?? ""} placeholder="Não indicado" />
           </Field>
           <Field label="Morada do cliente">
-            <input readOnly value={cliente ? `${cliente.morada} · ${cliente.localidade}` : ""} placeholder="—" />
+            <input readOnly value={cliente ? `${cliente.morada} · ${cliente.localidade}` : ""} placeholder="Não indicado" />
           </Field>
         </div>
         <div className="form-section">Encomenda</div>
@@ -133,7 +133,7 @@ export function NovaOEModal({ onClose }: { onClose: () => void }) {
           </Field>
           <Field label="Responsável">
             <select value={form.responsavel} onChange={(e) => set("responsavel", e.target.value)}>
-              {["Nuno Barros", "Marta Lopes", "Ana Sousa"].map((r) => (
+              {["Sérgio Carvalho", "Marta Lopes", "Ana Sousa"].map((r) => (
                 <option key={r}>{r}</option>
               ))}
             </select>
@@ -185,7 +185,7 @@ export function AdicionarNFModal({ oe, onClose, onCreated }: { oe: OE; onClose: 
     onCreated?.(numero);
   };
   return (
-    <Modal title={`OE ${oe.numero} — adicionar equipamento / intervenção`} onClose={onClose}>
+    <Modal title={`OE ${oe.numero} · adicionar equipamento / intervenção`} onClose={onClose}>
       <div className="modal-body">
         <Field label="Tipo de registo">
           <select value={registoTipo} onChange={(e) => setRegistoTipo(e.target.value as NF["registoTipo"])}>
@@ -209,7 +209,7 @@ export function AdicionarNFModal({ oe, onClose, onCreated }: { oe: OE; onClose: 
             <option value="">Novo NF principal (sequência global)</option>
             {principais.map((n) => (
               <option key={n.numero} value={n.numero}>
-                Sub-NF de NF {n.numero} — {n.designacao}
+                Sub-NF de NF {n.numero} · {n.designacao}
               </option>
             ))}
           </select>
@@ -237,7 +237,7 @@ export function NovoPedidoModal({ oe, onClose }: { oe: OE; onClose: () => void }
   const [quadroNf, setQuadroNf] = useState(quadros[0]?.numero ?? "");
   const [nfs, setNfs] = useState<string[]>([]);
   const quadro = nfsOE.find((n) => n.numero === quadroNf);
-  const tituloPara = (q?: NF) => (!q ? "" : q.designacao === q.tipo ? `Quadro elétrico NF ${q.numero} — OE ${oe.numero}` : `Quadro elétrico — ${q.designacao}`);
+  const tituloPara = (q?: NF) => (!q ? "" : q.designacao === q.tipo ? `Quadro elétrico NF ${q.numero} · OE ${oe.numero}` : `Quadro elétrico · ${q.designacao}`);
   const [titulo, setTitulo] = useState(tituloPara(quadro));
   const [hmi, setHmi] = useState<"Com HMI" | "Sem HMI" | "A definir">("A definir");
   const [requisitos, setRequisitos] = useState("");
@@ -246,7 +246,7 @@ export function NovoPedidoModal({ oe, onClose }: { oe: OE; onClose: () => void }
     onClose();
   };
   return (
-    <Modal title={`OE ${oe.numero} — novo pedido elétrico / automação`} subtitle="Folha de pedido para o OIF Elétrico" onClose={onClose}>
+    <Modal title={`OE ${oe.numero} · novo pedido elétrico / automação`} subtitle="Folha de pedido para o OIF Elétrico" onClose={onClose}>
       <div className="modal-body">
         {!quadros.length && <Note tone="amber">Esta OE ainda não tem nenhum NF do tipo &quot;Quadro elétrico&quot;. Adicione primeiro o quadro em Equipamentos / Intervenções.</Note>}
         <Field label="NF do quadro elétrico">
@@ -259,7 +259,7 @@ export function NovoPedidoModal({ oe, onClose }: { oe: OE; onClose: () => void }
           >
             {quadros.map((q) => (
               <option key={q.numero} value={q.numero}>
-                NF {q.numero} — {q.designacao}
+                NF {q.numero} · {q.designacao}
               </option>
             ))}
           </select>
@@ -314,7 +314,7 @@ export function AnexarDocumentoModal({ oe, nf, onClose }: { oe: number; nf?: str
   const [nfSel, setNfSel] = useState(nf ?? "");
   const [nome, setNome] = useState("");
   const submit = () => {
-    apply((s) => anexarDocumento(s, { oe, nf: nfSel || undefined, categoria, descricao, nome: nome || `${descricao.replace(/\s+/g, "_")}.pdf`, paginas: 1 + Math.floor(Math.random() * 8) }, user), "Documento anexado (simulação — nenhum ficheiro foi enviado).");
+    apply((s) => anexarDocumento(s, { oe, nf: nfSel || undefined, categoria, descricao, nome: nome || `${descricao.replace(/\s+/g, "_")}.pdf`, paginas: 1 + Math.floor(Math.random() * 8) }, user), "Documento anexado (simulação · nenhum ficheiro foi enviado).");
     onClose();
   };
   return (

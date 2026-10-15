@@ -75,7 +75,7 @@ export function OIFList() {
                         OE {o.oe} · NF {o.nf}{verComercial ? ` · ${q?.cliente}` : ""}
                       </small>
                       <div style={{ marginTop: 10 }}>
-                        <Progress value={o.etapas.length / ETAPAS.length} />
+                        {!o.importada && <Progress value={o.etapas.length / ETAPAS.length} />}
                       </div>
                       <div className="meta">
                         <span className={daysUntil(o.prazo) < 3 ? "danger" : "muted"} style={{ fontSize: 10.5 }}>
@@ -111,8 +111,8 @@ export function OIFList() {
               { label: "Quadro", render: (o) => <span><b>{quadroDe(state, o)?.codigo}</b><small className="block">{quadroDe(state, o)?.descricao}</small></span> },
               { label: "OE / NF", render: (o) => `OE ${o.oe} · NF ${o.nf}` },
               { label: "Estado", render: (o) => <StatusBadge estado={o.estado} /> },
-              { label: "Etapa", render: (o) => <div className="cell-progress"><Progress value={o.etapas.length / ETAPAS.length} />{o.etapas.length}/7</div> },
-              { label: "Responsável", render: (o) => o.responsavel || <span className="muted">—</span> },
+              { label: "Etapa", render: (o) => <div className="cell-progress">{!o.importada && <Progress value={o.etapas.length / ETAPAS.length} />}{o.importada ? "Ver histórico" : `${o.etapas.length}/7`}</div> },
+              { label: "Responsável", render: (o) => o.responsavel || <span className="muted">Não indicado</span> },
               { label: "Criada", render: (o) => date(o.criadaEm) },
               { label: "Prazo", align: "right", render: (o) => <span className={OIF_ATIVA(o) && daysUntil(o.prazo) < 3 ? "danger" : ""}>{date(o.prazo)}</span> },
             ]}

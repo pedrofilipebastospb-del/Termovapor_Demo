@@ -13,3 +13,7 @@ next-env.d.ts
 *.xlsx
 *.zip
 .next-verify/
+
+# Local source databases and customer/material snapshots
+.local-data/
+__pycache__/

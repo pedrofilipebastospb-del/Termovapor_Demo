@@ -8,7 +8,7 @@ import type { Perfil, State } from "@/types";
 import { buildSeed } from "@/data/seed";
 import { ADMIN, CONTAS, contaDe, veComercial, veCustos } from "@/lib/access";
 
-const STORAGE_KEY = "termovapor:dados:v2";
+const STORAGE_KEY = "termovapor:dados:real:v1";
 const SESSION_KEY = "termovapor:sessao";
 
 type Store = {
@@ -51,6 +51,9 @@ function writeStorage(key: string, value: unknown) {
 
 export function Provider({ children }: { children: ReactNode }) {
   const seed = useMemo(() => buildSeed(), []);
+  const initial = useRef<State>(seed);
+  const version = useRef("");
+  const [error, setError] = useState("");
   const [state, setState] = useState<State>(seed);
   const [sessao, setSessao] = useState<Perfil | null>(null);
   const [alterado, setAlterado] = useState(false);
@@ -60,19 +63,31 @@ export function Provider({ children }: { children: ReactNode }) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
-    const saved = readStorage<{ state: State }>(STORAGE_KEY);
-    if (saved?.state?.oes && saved.state.rececoes) {
-      setState(saved.state);
-      setAlterado(true);
-    }
+    let cancelled = false;
+    fetch("/api/dados", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Não foi possível carregar os dados locais.");
+        return res.json() as Promise<{ state: State; version: string }>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        initial.current = data.state;
+        version.current = data.version;
+        const saved = readStorage<{ state: State; version: string }>(STORAGE_KEY);
+        const valid = saved?.version === data.version && saved?.state?.oes && saved.state.rececoes;
+        setState(valid ? saved.state : structuredClone(data.state));
+        setAlterado(Boolean(valid));
+        loaded.current = true;
+        setReady(true);
+      })
+      .catch((err: Error) => { if (!cancelled) setError(err.message); });
     const s = readStorage<{ perfil: Perfil }>(SESSION_KEY);
     if (s?.perfil && CONTAS.some((c) => c.perfil === s.perfil)) setSessao(s.perfil);
-    loaded.current = true;
-    setReady(true);
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
-    if (loaded.current && alterado) writeStorage(STORAGE_KEY, { state });
+    if (loaded.current && alterado) writeStorage(STORAGE_KEY, { state, version: version.current });
   }, [state, alterado]);
 
   const notify = useCallback((message: string) => {
@@ -105,7 +120,7 @@ export function Provider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => {
     writeStorage(STORAGE_KEY, null);
-    setState(buildSeed());
+    setState(structuredClone(initial.current));
     setAlterado(false);
     notify("Dados iniciais repostos.");
   }, [notify]);
@@ -119,7 +134,7 @@ export function Provider({ children }: { children: ReactNode }) {
     sessao,
     entrar,
     sair,
-    user: conta.nome,
+    user: conta.nome || perfil,
     funcao: conta.funcao,
     verCustos: veCustos(perfil),
     verComercial: veComercial(perfil),
@@ -131,7 +146,7 @@ export function Provider({ children }: { children: ReactNode }) {
 
   return (
     <Context.Provider value={value}>
-      {children}
+      {error ? <div role="alert" style={{ padding: 32 }}>{error} <button onClick={() => window.location.reload()}>Tentar novamente</button></div> : children}
       {toast && (
         <div className="toast" role="status">
           <CheckCircle2 size={17} />

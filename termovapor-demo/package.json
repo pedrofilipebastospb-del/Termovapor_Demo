@@ -7,7 +7,9 @@
     "dev": "next dev --hostname 127.0.0.1 --port 3200",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1 --port 3200",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "import:real": "python3 scripts/import-real.py",
+    "predev": "npm run import:real"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

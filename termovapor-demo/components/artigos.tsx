@@ -11,6 +11,7 @@ import { useStore } from "./store";
 import { Badge, Button, DetailList, Field, Metric, Modal, Note, PageHeader, SearchInput, Select, Table, type Column } from "./ui";
 
 function StockBar({ a }: { a: Artigo }) {
+  if (a.stockRegistado === false) return <span className="muted">Sem registo</span>;
   const max = Math.max(a.stock, a.minimo * 2, 1);
   const pct = livre(a) / max;
   return (
@@ -24,7 +25,7 @@ function StockBar({ a }: { a: Artigo }) {
 
 function ArtigoDrawer({ artigo, onClose }: { artigo: Artigo; onClose: () => void }) {
   const { state, apply, user, verCustos } = useStore();
-  const [stock, setStock] = useState(String(artigo.stock));
+  const [stock, setStock] = useState(artigo.stockRegistado === false ? "" : String(artigo.stock));
   const [motivo, setMotivo] = useState("");
   const [minimo, setMinimo] = useState(String(artigo.minimo));
   const movimentos = state.movimentos.filter((m) => m.artigoId === artigo.id);
@@ -36,9 +37,9 @@ function ArtigoDrawer({ artigo, onClose }: { artigo: Artigo; onClose: () => void
     <Modal drawer title={artigo.descricao} subtitle={`${artigo.codigo} · ${artigo.codigoInterno}`} onClose={onClose}>
       <div className="modal-body">
         <div className="metrics four" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-          <Metric label="Stock" value={num(artigo.stock, 2)} />
+          <Metric label="Stock" value={artigo.stockRegistado === false ? "Sem registo" : num(artigo.stock, 2)} />
           <Metric label="Reservado" value={num(artigo.reservado, 2)} accent="accent" />
-          <Metric label="Livre" value={num(livre(artigo), 2)} accent={stockCritico(artigo) ? "danger" : "positive"} hint={`Mínimo ${artigo.minimo}`} />
+          <Metric label="Livre" value={artigo.stockRegistado === false ? "Por confirmar" : num(livre(artigo), 2)} accent={stockCritico(artigo) ? "danger" : "positive"} hint={`Mínimo ${artigo.minimo}`} />
         </div>
         <DetailList
           items={[
@@ -62,7 +63,7 @@ function ArtigoDrawer({ artigo, onClose }: { artigo: Artigo; onClose: () => void
                   Necessário {c!.necessario} · reservado {c!.reservado}
                 </small>
               </span>
-              {c!.falta ? <Badge tone="red">Falta {c!.falta}</Badge> : <Badge tone="green">Coberto</Badge>}
+              {c!.artigo.stockRegistado === false ? <Badge tone="amber">Stock por confirmar</Badge> : c!.falta ? <Badge tone="red">Falta {c!.falta}</Badge> : <Badge tone="green">Coberto</Badge>}
             </div>
           ))
         ) : (
@@ -84,6 +85,7 @@ function ArtigoDrawer({ artigo, onClose }: { artigo: Artigo; onClose: () => void
         </div>
         <div className="form-actions" style={{ marginTop: 0 }}>
           <Button
+            disabled={stock.trim() === "" || !Number.isFinite(Number(stock))}
             onClick={() => {
               apply((s) => {
                 let next = ajustarStock(s, artigo.id, Math.max(0, Number(stock) || 0), motivo, user);
@@ -115,48 +117,7 @@ function ArtigoDrawer({ artigo, onClose }: { artigo: Artigo; onClose: () => void
 }
 
 function ImportarSageModal({ onClose }: { onClose: () => void }) {
-  const { state, apply, user } = useStore();
-  const [naoVazios, setNaoVazios] = useState(true);
-  // Pré-visualização sintética da "Listagem_Material_Eletrico_SAGE.xlsx".
-  const preview = [
-    { id: "a33", stock: 30, custo: 4.1 },
-    { id: "a19", stock: state.artigos.find((a) => a.id === "a19")!.stock, custo: 368 },
-    { id: "a30", stock: 6, custo: 27.5 },
-    { id: "a10", stock: 5, custo: 33.4 },
-  ];
-  return (
-    <Modal title="Importar Excel do SAGE" subtitle="Listagem_Material_Eletrico_SAGE.xlsx (exemplo sintético)" onClose={onClose} wide>
-      <div className="modal-body">
-        <Note tone="blue">Correspondência: Artigo → código · Descrição → descrição · Stock real → stock atual · Último preço de compra → custo interno · Categoria elétrica → categoria. O código impede duplicados.</Note>
-        <Table
-          rows={preview}
-          rowKey={(r) => r.id}
-          columns={[
-            { label: "Artigo", render: (r) => <b>{state.artigos.find((a) => a.id === r.id)?.codigo}</b> },
-            { label: "Descrição", render: (r) => state.artigos.find((a) => a.id === r.id)?.descricao },
-            { label: "Stock atual → SAGE", align: "right", render: (r) => `${state.artigos.find((a) => a.id === r.id)?.stock} → ${r.stock}` },
-            { label: "Custo atual → SAGE", align: "right", render: (r) => `${money(state.artigos.find((a) => a.id === r.id)?.custo ?? 0)} → ${money(r.custo)}` },
-          ]}
-        />
-        <label className="checkbox-label" style={{ marginTop: 16 }}>
-          <input type="checkbox" checked={naoVazios} onChange={(e) => setNaoVazios(e.target.checked)} /> Não substituir por valores vazios
-        </label>
-        <div className="form-actions">
-          <Button secondary onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={() => {
-              apply((s) => preview.reduce((acc, r) => atualizarArtigo(ajustarStock(acc, r.id, r.stock, "Importação SAGE", user), r.id, { custo: r.custo }, user, "Importação SAGE"), s), "Importação SAGE concluída: 4 artigos atualizados.");
-              onClose();
-            }}
-          >
-            Confirmar importação
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
+  return <Modal title="Dados SAGE" onClose={onClose}><div className="modal-body"><Note tone="blue">Os clientes e artigos iniciais foram importados das bases OE e OIF fornecidas. Para atualizar a cópia local, execute npm run import:real e recarregue a página.</Note><Button secondary onClick={onClose}>Fechar</Button></div></Modal>;
 }
 
 export function Artigos({ vistaInicial = "todos", pesquisa = "" }: { vistaInicial?: string; pesquisa?: string }) {
@@ -182,12 +143,12 @@ export function Artigos({ vistaInicial = "todos", pesquisa = "" }: { vistaInicia
     { label: "Código", render: (a) => <span><b>{a.codigo}</b><small className="block">{a.codigoInterno}</small></span> },
     { label: "Descrição", render: (a) => <span><b>{a.descricao}</b><small className="block">{a.marca} · {a.referencia}</small></span> },
     { label: "Categoria", render: (a) => <span className="muted">{a.categoria}</span> },
-    { label: "Stock", align: "right", render: (a) => num(a.stock, 2) },
-    { label: "Reservado", align: "right", render: (a) => (a.reservado ? num(a.reservado, 2) : "—") },
-    { label: "Livre", align: "right", render: (a) => <b className={stockCritico(a) ? "danger" : ""}>{num(livre(a), 2)}</b> },
+    { label: "Stock", align: "right", render: (a) => a.stockRegistado === false ? "Sem registo" : num(a.stock, 2) },
+    { label: "Reservado", align: "right", render: (a) => (a.reservado ? num(a.reservado, 2) : "Não indicado") },
+    { label: "Livre", align: "right", render: (a) => a.stockRegistado === false ? "Por confirmar" : <b className={stockCritico(a) ? "danger" : ""}>{num(livre(a), 2)}</b> },
     { label: "Mínimo", align: "right", render: (a) => a.minimo },
     { label: "Nível", render: (a) => <StockBar a={a} /> },
-    { label: "Falta OIF", align: "right", render: (a) => (faltas.get(a.id) ? <Badge tone="red">{faltas.get(a.id)}</Badge> : "—") },
+    { label: "Falta OIF", align: "right", render: (a) => (faltas.get(a.id) ? <Badge tone="red">{faltas.get(a.id)}</Badge> : "Não indicado") },
     { label: "Local.", render: (a) => <span className="mono">{a.localizacao}</span> },
   ];
   if (verCustos) columns.push({ label: "Custo unit.", align: "right", render: (a) => money(a.custo) });
@@ -271,7 +232,7 @@ export function Movimentos() {
           { label: "Artigo", render: (m) => { const a = state.artigos.find((x) => x.id === m.artigoId); return <span><b>{a?.codigo}</b><small className="block">{a?.descricao}</small></span>; } },
           { label: "Quantidade", align: "right", render: (m) => num(m.quantidade, 2) },
           { label: "Documento", render: (m) => (m.documento.startsWith("OIF") ? <Link className="accent" href={`/oif/${m.documento}`}>{m.documento}</Link> : m.documento) },
-          { label: "Observações", render: (m) => <span className="muted">{m.observacoes || "—"}</span> },
+          { label: "Observações", render: (m) => <span className="muted">{m.observacoes || "Não indicado"}</span> },
         ]}
       />
     </>

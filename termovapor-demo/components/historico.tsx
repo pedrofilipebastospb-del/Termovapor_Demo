@@ -39,7 +39,7 @@ export function Historico() {
           { label: "Entidade", render: (a) => <Badge tone={TOM[a.entidade]}>{a.entidade}</Badge> },
           { label: "Referência", render: (a) => <b className="mono">{a.referencia}</b> },
           { label: "Ação", render: (a) => a.acao },
-          { label: "Detalhe", render: (a) => <span className="muted wrap" style={{ display: "inline-block", maxWidth: 420 }}>{a.detalhe || "—"}</span> },
+          { label: "Detalhe", render: (a) => <span className="muted wrap" style={{ display: "inline-block", maxWidth: 420 }}>{a.detalhe || "Não indicado"}</span> },
           { label: "Utilizador", render: (a) => a.utilizador },
         ]}
       />

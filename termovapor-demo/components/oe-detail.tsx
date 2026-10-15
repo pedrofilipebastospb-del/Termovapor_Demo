@@ -1,4 +1,5 @@
 "use client";
+import { PdfLink } from "./pdf-link";
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CornerDownRight, FileText, Pencil, Plus, Printer, Send, Zap } from "lucide-react";
@@ -44,7 +45,7 @@ function EditarOEModal({ oe, onClose }: { oe: OE; onClose: () => void }) {
           </Field>
           <Field label="Responsável">
             <select value={form.responsavel} onChange={(e) => set("responsavel", e.target.value)}>
-              {["Nuno Barros", "Marta Lopes", "Ana Sousa"].map((r) => (
+              {["Sérgio Carvalho", "Marta Lopes", "Ana Sousa"].map((r) => (
                 <option key={r}>{r}</option>
               ))}
             </select>
@@ -166,14 +167,13 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
   const cliente = state.clientes.find((c) => c.codigo === oe.clienteCodigo);
 
   return (
-    <>
+    <div className="oe-detail-page">
       <Link href="/oe" className="back-link">
         <ArrowLeft size={14} /> Ordens de Execução
       </Link>
       <PageHeader
         eyebrow={`${oe.cliente} · N.º SAGE ${oe.clienteCodigo}`}
         title={`OE ${oe.numero}`}
-        description={oe.descricao}
         actions={
           <>
             <select
@@ -197,9 +197,9 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
       <div className="metrics four">
         <div className="metric">
           <div className="metric-label">Estado</div>
-          <strong style={{ fontSize: 18 }}>
+          <div className="oe-status-value">
             <StatusBadge estado={oe.estado} /> <PrioridadeBadge prioridade={oe.prioridade} />
-          </strong>
+          </div>
           <small>Responsável: {oe.responsavel}</small>
         </div>
         <div className="metric">
@@ -235,76 +235,43 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
       />
 
       {tab === "resumo" && (
-        <>
-          <div className="grid-main">
-            <Panel title="Acompanhamento da ordem" subtitle={oe.descricao}>
-              <div className="panel-body">
-                <div className="kv-grid">
-                  <div><dt>Prioridade</dt><dd><PrioridadeBadge prioridade={oe.prioridade} /></dd></div>
-                  <div><dt>Data de criação</dt><dd>{date(oe.dataCriacao)}</dd></div>
-                  <div><dt>Prazo de entrega</dt><dd>{date(oe.dataEntrega)}</dd></div>
-                  <div><dt>Responsável</dt><dd>{oe.responsavel}</dd></div>
-                  <div><dt>Encomenda do cliente</dt><dd>{oe.encomendaCliente || "—"}</dd></div>
-                  <div><dt>Orçamento Termovapor</dt><dd>{oe.orcamento || "—"}</dd></div>
-                  <div><dt>Morada de instalação</dt><dd>{oe.moradaInstalacao}</dd></div>
-                  <div><dt>Documentos</dt><dd>{docs.length} no dossier</dd></div>
-                </div>
-                {oe.observacoes && <Note tone="neutral">{oe.observacoes}</Note>}
+        <div className="oe-summary">
+          <Panel className="oe-order-panel" title="Dados da ordem">
+            <div className="panel-body">
+              <p className="oe-scope">{oe.descricao || "Descrição não indicada."}</p>
+              <dl className="oe-order-facts">
+                <div><dt>Data de criação</dt><dd>{date(oe.dataCriacao)}</dd></div>
+                <div><dt>Encomenda do cliente</dt><dd>{oe.encomendaCliente || "Não indicado"}</dd></div>
+                <div><dt>Orçamento Termovapor</dt><dd>{oe.orcamento || "Não indicado"}</dd></div>
+                <div><dt>Documentos</dt><dd><button className="oe-context-link" type="button" onClick={() => setTab("dossier")}>{docs.length} no dossier <ArrowRight size={12} aria-hidden /></button></dd></div>
+                <div className="oe-installation"><dt>Morada de instalação</dt><dd>{oe.moradaInstalacao || "Não indicada"}</dd></div>
+              </dl>
+              {oe.observacoes && <div className="oe-order-notes"><b>Observações</b><p>{oe.observacoes}</p></div>}
+            </div>
+          </Panel>
+          <div className="oe-work-grid">
+            <Panel className="oe-equipment-panel" title="Equipamentos associados" subtitle={`${nfs.length} registos · ${nfs.filter((n) => n.principal).length} sub-NF`} actions={<Button small secondary onClick={() => setModal("nf")}><Plus size={14} /> Adicionar</Button>}>
+              <div className="oe-context-list">
+                {nfs.map((n) => (
+                  <button type="button" key={n.numero} onClick={() => setNfAberto(n.numero)}>
+                    <span className="oe-context-copy"><b>{n.principal && <CornerDownRight size={12} aria-hidden />} NF {n.numero} · {n.tipo}</b><small>{n.designacao}</small></span>
+                    <span className="oe-context-status"><StatusBadge estado={n.estado} /><ArrowRight size={14} aria-hidden /></span>
+                  </button>
+                ))}
+                {!nfs.length && <div className="oe-context-empty"><p>Ainda sem equipamentos.</p><Button small secondary onClick={() => setModal("nf")}>Adicionar equipamento</Button></div>}
               </div>
             </Panel>
-            <Panel title="Eletricidade deste trabalho" subtitle="Fase da OIF em tempo real, sem custos">
-              <div className="activity-list">
+            <Panel className="oe-electrical-panel" title="Eletricidade deste trabalho" subtitle={`${pedidos.length} pedidos · ${pedidos.filter((p) => p.estado === "Devolvido à OE").length} devolvidos pelo OIF`}>
+              <div className="oe-context-list">
                 {pedidos.map((p) => {
                   const o = state.oifs.find((x) => x.numero === p.oif);
-                  return (
-                    <Link key={p.codigo} href={`/pedidos?p=${p.codigo}`}>
-                      <span style={{ minWidth: 0 }}>
-                        <b className="mono">{p.codigo}</b>
-                        <small>{p.titulo}</small>
-                      </span>
-                      <span className="attention-meta">
-                        <StatusBadge estado={o ? o.estado : p.estado} />
-                        <small>{o ? o.numero : "Por enviar"}</small>
-                      </span>
-                    </Link>
-                  );
+                  return <Link key={p.codigo} href={`/pedidos?p=${p.codigo}`}><span className="oe-context-copy"><b className="mono">{p.codigo}</b><small>{p.titulo}</small><small>{o ? o.numero : "Por enviar"}</small></span><span className="oe-context-status"><StatusBadge estado={o ? o.estado : p.estado} /><ArrowRight size={14} aria-hidden /></span></Link>;
                 })}
-                {!pedidos.length && (
-                  <p className="muted" style={{ fontSize: 12, padding: "16px 0" }}>
-                    Sem pedidos elétricos. Crie-os no separador Eletricidade / Automação.
-                  </p>
-                )}
+                {!pedidos.length && <div className="oe-context-empty"><Zap size={20} aria-hidden /><b>Sem pedidos elétricos</b><p>Os pedidos desta ordem aparecem aqui depois de criados.</p><Button small secondary onClick={() => setTab("eletrica")}>Ir para Eletricidade / Automação <ArrowRight size={13} /></Button></div>}
               </div>
             </Panel>
           </div>
-          <Panel
-            title="Equipamentos associados"
-            subtitle={`${nfs.length} registos · ${nfs.filter((n) => n.principal).length} sub-NF`}
-            actions={
-              <Button small secondary onClick={() => setModal("nf")}>
-                <Plus size={14} /> Adicionar
-              </Button>
-            }
-          >
-            <div className="activity-list">
-              {nfs.map((n) => (
-                <button type="button" key={n.numero} onClick={() => setNfAberto(n.numero)} className="list-button">
-                  <span style={{ minWidth: 0 }}>
-                    <b>
-                      {n.principal && <CornerDownRight size={12} className="muted" />} NF {n.numero} · {n.tipo}
-                    </b>
-                    <small>{n.designacao}</small>
-                  </span>
-                  <span className="attention-meta">
-                    <StatusBadge estado={n.estado} />
-                    <ArrowRight size={15} />
-                  </span>
-                </button>
-              ))}
-              {!nfs.length && <p className="muted" style={{ fontSize: 12, padding: "16px 0" }}>Ainda sem equipamentos.</p>}
-            </div>
-          </Panel>
-        </>
+        </div>
       )}
 
       {tab === "geral" && (
@@ -371,8 +338,8 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
               { label: "Tipo", render: (n) => n.tipo },
               { label: "Designação", render: (n) => <b>{n.designacao}</b> },
               { label: "Estado", render: (n) => <StatusBadge estado={n.estado} /> },
-              { label: "Documentos", align: "center", render: (n) => state.documentos.filter((d) => d.nf === n.numero).length || "—" },
-              { label: "OIF", render: (n) => (n.campos.el_oif ? <Link className="accent" href={`/oif/${n.campos.el_oif}`} onClick={(e) => e.stopPropagation()}>{n.campos.el_oif}</Link> : <span className="muted">—</span>) },
+              { label: "Documentos", align: "center", render: (n) => state.documentos.filter((d) => d.nf === n.numero).length || "Não indicado" },
+              { label: "OIF", render: (n) => (n.campos.el_oif ? <Link className="accent" href={`/oif/${n.campos.el_oif}`} onClick={(e) => e.stopPropagation()}>{n.campos.el_oif}</Link> : <span className="muted">Não indicado</span>) },
             ]}
           />
         </Panel>
@@ -400,11 +367,11 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
               columns={[
                 { label: "Pedido", render: (p) => <span><b>{p.codigo}</b><small className="block">{p.titulo}</small></span> },
                 { label: "Quadro", render: (p) => `NF ${p.quadroNf}` },
-                { label: "Equipamentos", render: (p) => p.nfs.map((n) => `NF ${n}`).join(", ") || "—" },
+                { label: "Equipamentos", render: (p) => p.nfs.map((n) => `NF ${n}`).join(", ") || "Não indicado" },
                 { label: "HMI", render: (p) => p.hmi },
                 { label: "Revisão", align: "center", render: (p) => `R${String(p.revisao).padStart(2, "0")}` },
                 { label: "Estado", render: (p) => <StatusBadge estado={p.estado} /> },
-                { label: "Fase da OIF", render: (p) => { const o = state.oifs.find((x) => x.numero === p.oif); return o ? <StatusBadge estado={o.estado} /> : <span className="muted">—</span>; } },
+                { label: "Fase da OIF", render: (p) => { const o = state.oifs.find((x) => x.numero === p.oif); return o ? <StatusBadge estado={o.estado} /> : <span className="muted">Não indicado</span>; } },
                 {
                   label: "OIF",
                   align: "right",
@@ -462,13 +429,13 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
                     <span>
                       <b>{d.descricao}</b>
                       <small>
-                        {d.nome} · {d.paginas} pág. · {date(d.data)}
+                        {d.nome}{d.paginas ? ` · ${d.paginas} pág.` : ""}{d.data ? ` · ${date(d.data)}` : ""}
                       </small>
                     </span>
                     <span className="title-row">
                       {d.nf && <Badge tone="blue">NF {d.nf}</Badge>}
                       <Badge>{d.categoria}</Badge>
-                      <FileText size={15} className="muted" />
+                      <PdfLink href={d.pdfUrl} />
                     </span>
                   </div>
                 ))
@@ -490,7 +457,7 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
             { label: "Data", render: (a) => dateTime(a.data) },
             { label: "Referência", render: (a) => <b>{a.referencia}</b> },
             { label: "Ação", render: (a) => a.acao },
-            { label: "Detalhe", render: (a) => <span className="muted">{a.detalhe || "—"}</span> },
+            { label: "Detalhe", render: (a) => <span className="muted">{a.detalhe || "Não indicado"}</span> },
             { label: "Utilizador", render: (a) => a.utilizador },
           ]}
         />
@@ -502,6 +469,6 @@ export function OEDetail({ numero, tabInicial }: { numero: number; tabInicial?: 
       {modal === "pedido" && <NovoPedidoModal oe={oe} onClose={() => setModal("")} />}
       {modal === "doc" && <AnexarDocumentoModal oe={oe.numero} onClose={() => setModal("")} />}
       {nfAberto && <NFEditor numero={nfAberto} onClose={() => setNfAberto(null)} />}
-    </>
+    </div>
   );
 }

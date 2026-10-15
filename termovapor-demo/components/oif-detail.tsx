@@ -1,4 +1,5 @@
 "use client";
+import { PdfLink } from "./pdf-link";
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, CheckCircle2, ClipboardCheck, Cpu, FileSearch, FileUp, Lock, PackageCheck, Play, Printer, RefreshCw, Truck, Undo2, Wrench } from "lucide-react";
@@ -100,13 +101,13 @@ function NextAction({ oif, onDevolver }: { oif: OIF; onDevolver: () => void }) {
   if (n === 2) {
     if (!quadro?.pdf)
       return (
-        <Button onClick={() => apply((s) => associarPDF(s, oif.quadroId, user), "PDF completo do SEE Electrical associado ao quadro.")}>
+        <Button disabled title="Importação de novos PDF por configurar" onClick={() => apply((s) => associarPDF(s, oif.quadroId, user), "PDF completo do SEE Electrical associado ao quadro.")}>
           <FileUp size={15} /> Associar PDF SEE
         </Button>
       );
     if (!quadro.linhas.length)
       return (
-        <Button onClick={() => apply((s) => extrairMateriais(s, oif.quadroId, user), "Lista de equipamentos extraída do PDF SEE.")}>
+        <Button disabled title="Materiais importados da base OIF" onClick={() => apply((s) => extrairMateriais(s, oif.quadroId, user), "Lista de equipamentos extraída do PDF SEE.")}>
           <FileSearch size={15} /> Extrair materiais do PDF
         </Button>
       );
@@ -184,11 +185,11 @@ export function OIFDetail({ numero }: { numero: string }) {
   const historico = state.auditoria.filter((a) => a.referencia === oif.numero || a.referencia === quadro?.codigo || a.referencia === oif.pedido);
   const encomendas = state.encomendas.filter((e) => e.oif === oif.numero);
   const ok: string[] = [
-    `Pedido ${oif.pedido} recebido da OE ${oif.oe}`,
+    ...(oif.pedido ? [`Pedido ${oif.pedido} recebido da OE ${oif.oe}`] : []),
     ...(quadro?.pdf ? [`PDF SEE associado (${quadro.pdf})`] : []),
     ...(quadro?.linhas.length ? [`${quadro.linhas.length} linhas de material na lista`] : []),
     ...(rows.length && !faltas.length && !porReservar.length && OIF_ATIVA(oif) && oif.etapas.length > 3 ? ["Todos os materiais reservados"] : []),
-    ...oif.etapas.slice(2).map((e) => `${e.etapa} — ${date(e.data)}`),
+    ...oif.etapas.slice(2).map((e) => `${e.etapa} · ${date(e.data)}`),
   ];
 
   return (
@@ -208,12 +209,13 @@ export function OIFDetail({ numero }: { numero: string }) {
             <Button secondary onClick={() => setModal("editar")}>
               Editar
             </Button>
+            {quadro?.pdfUrl && <PdfLink href={quadro.pdfUrl} label="Abrir esquema SEE" />}
             <NextAction oif={oif} onDevolver={() => setModal("devolver")} />
           </>
         }
       />
 
-      <Panel title="Linha de tempo — da criação à devolução à OE" actions={<StatusBadge estado={oif.estado} />}>
+      <Panel title="Linha de tempo · da criação à devolução à OE" actions={<StatusBadge estado={oif.estado} />}>
         <div className="panel-body">
           <FlowStepper oif={oif} />
         </div>
@@ -252,10 +254,10 @@ export function OIFDetail({ numero }: { numero: string }) {
                   columns={[
                     { label: "Artigo", render: (r) => <span><b>{r.artigo.descricao}</b><small className="block">{r.artigo.codigo} · {r.artigo.marca} {r.artigo.referencia}</small></span> },
                     { label: "Necessário", align: "right", render: (r) => num(r.necessario, 2) },
-                    { label: "Reservado", align: "right", render: (r) => (r.reservado ? <b className="positive">{num(r.reservado, 2)}</b> : "—") },
-                    { label: "Stock livre", align: "right", hint: "Stock físico menos todas as reservas ativas", render: (r) => num(r.livre, 2) },
-                    { label: "Por reservar", align: "right", hint: "Há stock livre para cobrir esta quantidade", render: (r) => (r.porReservar ? <Badge tone="blue">{num(r.porReservar, 2)}</Badge> : "—") },
-                    { label: "Falta real", align: "right", hint: "Necessidade sem cobertura depois de reservas e stock livre", render: (r) => (r.falta ? <Badge tone="red">{num(r.falta, 2)}</Badge> : <span className="muted">0</span>) },
+                    { label: "Reservado", align: "right", render: (r) => (r.reservado ? <b className="positive">{num(r.reservado, 2)}</b> : "Não indicado") },
+                    { label: "Stock livre", align: "right", hint: "Stock físico menos todas as reservas ativas", render: (r) => r.artigo.stockRegistado === false ? "Sem registo" : num(r.livre, 2) },
+                    { label: "Por reservar", align: "right", hint: "Há stock livre para cobrir esta quantidade", render: (r) => (r.porReservar ? <Badge tone="blue">{num(r.porReservar, 2)}</Badge> : "Não indicado") },
+                    { label: "Falta real", align: "right", hint: "Necessidade sem cobertura depois de reservas e stock livre", render: (r) => (r.artigo.stockRegistado === false ? <Badge tone="amber">Por confirmar</Badge> : r.falta ? <Badge tone="red">{num(r.falta, 2)}</Badge> : <span className="muted">0</span>) },
                   ]}
                 />
               )}
@@ -289,8 +291,8 @@ export function OIFDetail({ numero }: { numero: string }) {
                   items={[
                     ["N.º esquema", quadro.esquema],
                     ["Revisão", quadro.revisao],
-                    ["PDF completo SEE", quadro.pdf || <span className="danger" key="p">Por associar</span>],
-                    ["Extração", quadro.extraidoEm ? date(quadro.extraidoEm) : "Por fazer"],
+                    ["PDF completo SEE", <span key="p">{quadro.pdf || "Não indicado na base original"} <PdfLink href={quadro.pdfUrl} /></span>],
+                    ["Extração", quadro.extraidoEm ? date(quadro.extraidoEm) : quadro.linhas.length ? "Lista importada da base OIF" : "Sem lista importada"],
                     ["Linhas de material", quadro.linhas.length],
                     ["Não cadastradas", linhasSemArtigo(quadro).length ? <Badge tone="amber" key="n">{linhasSemArtigo(quadro).length} por associar</Badge> : "0"],
                   ]}
@@ -313,12 +315,14 @@ export function OIFDetail({ numero }: { numero: string }) {
             </Panel>
           )}
 
+          {tab === "quadro" && state.documentos.some((d) => d.pedidoCodigo === oif.pedido) && <Panel title="Documentos do pedido"><div className="panel-body">{state.documentos.filter((d) => d.pedidoCodigo === oif.pedido).map((d) => <div className="doc-row" key={d.id}><span><b>{d.descricao}</b><small>{d.nome}</small></span><PdfLink href={d.pdfUrl} /></div>)}</div></Panel>}
+
           {tab === "custos" &&
             (verCustos ? (
               <>
                 <div className="title-row" style={{ marginBottom: 12 }}>
                   <span className="internal-label">
-                    <Lock size={11} /> DOCUMENTO INTERNO — NÃO ENVIAR AO CLIENTE
+                    <Lock size={11} /> DOCUMENTO INTERNO · NÃO ENVIAR AO CLIENTE
                   </span>
                 </div>
                 <div className="cost-box">
@@ -380,7 +384,7 @@ export function OIFDetail({ numero }: { numero: string }) {
                 { label: "Data", render: (a) => dateTime(a.data) },
                 { label: "Referência", render: (a) => <b>{a.referencia}</b> },
                 { label: "Ação", render: (a) => a.acao },
-                { label: "Detalhe", render: (a) => <span className="muted">{a.detalhe || "—"}</span> },
+                { label: "Detalhe", render: (a) => <span className="muted">{a.detalhe || "Não indicado"}</span> },
                 { label: "Utilizador", render: (a) => a.utilizador },
               ]}
             />
@@ -394,6 +398,7 @@ export function OIFDetail({ numero }: { numero: string }) {
                 items={[
                   ["Estado", <StatusBadge key="e" estado={oif.estado} />],
                   ["Responsável", oif.responsavel || <span className="danger" key="r">Por atribuir</span>],
+                  ["Prazo na origem", oif.prazoOriginal || "Não indicado"],
                   ["Prazo", `${date(oif.prazo)}${OIF_ATIVA(oif) ? ` · ${prazoLabel(oif.prazo)}` : ""}`],
                   ["Criada em", date(oif.criadaEm)],
                   ["Pedido da OE", pedido ? <Link key="p" className="accent" href={oeHref(perfil, oif.oe)}>{pedido.codigo} · R{String(pedido.revisao).padStart(2, "0")}</Link> : oif.pedido],

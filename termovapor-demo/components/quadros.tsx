@@ -1,4 +1,5 @@
 "use client";
+import { PdfLink } from "./pdf-link";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Cpu, FileSearch, FileText, FileUp, Link2, Plus, RefreshCw, Trash2 } from "lucide-react";
@@ -21,7 +22,7 @@ function AssociarModal({ quadro, linha, onClose }: { quadro: Quadro; linha: Linh
   const lista = useMemo(() => state.artigos.filter((a) => matches(query, a.codigo, a.descricao, a.referencia, a.marca)).slice(0, 30), [state.artigos, query]);
   const artigo = state.artigos.find((a) => a.id === sel);
   return (
-    <Modal title="Associar artigo cadastrado" subtitle={`${linha.designacao} · ${linha.refExtraida || "sem referência"} — ${linha.descricaoExtraida}`} onClose={onClose} wide>
+    <Modal title="Associar artigo cadastrado" subtitle={`${linha.designacao} · ${linha.refExtraida || "sem referência"} · ${linha.descricaoExtraida}`} onClose={onClose} wide>
       <div className="modal-body">
         <div className="filter-bar">
           <SearchInput value={query} onChange={setQuery} placeholder="Pesquisar artigo por código, referência, marca ou descrição…" />
@@ -40,7 +41,7 @@ function AssociarModal({ quadro, linha, onClose }: { quadro: Quadro; linha: Linh
             { label: "Código", render: (a) => <b>{a.codigo}</b> },
             { label: "Descrição", render: (a) => a.descricao },
             { label: "Marca / referência", render: (a) => <span className="muted">{a.marca} · {a.referencia}</span> },
-            { label: "Stock", align: "right", render: (a) => a.stock - a.reservado },
+            { label: "Stock", align: "right", render: (a) => a.stockRegistado === false ? "Sem registo" : a.stock - a.reservado },
             { label: "", render: (a) => (a.id === sel ? <Badge tone="blue">Selecionado</Badge> : null) },
           ]}
         />
@@ -144,24 +145,24 @@ function QuadroDetail({ quadro }: { quadro: Quadro }) {
           <div className="kv-grid" style={{ marginBottom: 16 }}>
             <div><dt>OE / NF</dt><dd>OE {quadro.oe} · NF {quadro.nf}</dd></div>
             <div><dt>N.º esquema / revisão</dt><dd>{quadro.esquema} · {quadro.revisao}</dd></div>
-            <div><dt>Extração</dt><dd>{quadro.extraidoEm ? date(quadro.extraidoEm) : "Por fazer"}</dd></div>
-            <div><dt>Estado da OIF</dt><dd>{oif ? <StatusBadge estado={oif.estado} /> : "—"}</dd></div>
+            <div><dt>Extração</dt><dd>{quadro.extraidoEm ? date(quadro.extraidoEm) : quadro.linhas.length ? "Lista importada da base OIF" : "Sem lista importada"}</dd></div>
+            <div><dt>Estado da OIF</dt><dd>{oif ? <StatusBadge estado={oif.estado} /> : "Não indicado"}</dd></div>
           </div>
           <div className="doc-row" style={{ border: "1px solid var(--line)", borderRadius: 6, padding: 12 }}>
             <span className="doc-icon">PDF</span>
             <span>
-              <b>{quadro.pdf || "PDF completo do SEE Electrical por associar"}</b>
-              <small>Um único PDF completo; a página &quot;Lista de Equipamentos&quot; é lida automaticamente.</small>
+              <b>{quadro.pdf || "PDF SEE não indicado na base original"}</b>
+              <small>Esquema original do SEE Electrical. A lista de materiais apresentada foi importada da base OIF.</small>
             </span>
             <span className="title-row">
               {!quadro.pdf ? (
-                <Button small onClick={() => apply((s) => associarPDF(s, quadro.id, user), "PDF SEE associado ao quadro.")}>
+                <Button small disabled title="Importação de novos PDF por configurar" onClick={() => apply((s) => associarPDF(s, quadro.id, user), "PDF SEE associado ao quadro.")}>
                   <FileUp size={13} /> Selecionar PDF
                 </Button>
               ) : (
                 <>
-                  <FileText size={15} className="muted" />
-                  <Button small secondary={!!quadro.linhas.length} disabled={bloqueado} onClick={() => apply((s) => extrairMateriais(s, quadro.id, user), "Lista de equipamentos extraída do PDF.")}>
+                  <PdfLink href={quadro.pdfUrl} />
+                  <Button small secondary={!!quadro.linhas.length} disabled title="A lista apresentada é a lista real importada da base OIF" onClick={() => apply((s) => extrairMateriais(s, quadro.id, user), "Lista de equipamentos extraída do PDF.")}>
                     {quadro.linhas.length ? <RefreshCw size={13} /> : <FileSearch size={13} />} {quadro.linhas.length ? "Reextrair" : "Extrair materiais"}
                   </Button>
                 </>
@@ -186,7 +187,7 @@ function QuadroDetail({ quadro }: { quadro: Quadro }) {
           rowClass={(l) => (l.artigoId ? "" : "row-warning")}
           columns={[
             { label: "Designação", render: (l) => <b className="mono">{l.designacao}</b> },
-            { label: "Ref. fabricante", render: (l) => <span className="mono">{l.refExtraida || "—"}</span> },
+            { label: "Ref. fabricante", render: (l) => <span className="mono">{l.refExtraida || "Não indicado"}</span> },
             { label: "Descrição", render: (l) => <span><b>{l.artigoId ? arts.get(l.artigoId)?.descricao : l.descricaoExtraida}</b><small className="block">{l.fabricante}</small></span> },
             { label: "Artigo", render: (l) => (l.artigoId ? <Badge tone="green">{arts.get(l.artigoId)?.codigo} · cadastrado</Badge> : <Badge tone="amber">NÃO CADASTRADO</Badge>) },
             {

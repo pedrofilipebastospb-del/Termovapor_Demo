@@ -20,7 +20,7 @@ export function Clientes({ pesquisa = "" }: { pesquisa?: string }) {
         actions={<SincronizarSage alvo="clientes" total={state.clientes.length} />}
       />
       <div className="filter-bar">
-        <SearchInput value={query} onChange={setQuery} placeholder="Experimente: “conservas atlantico”, “vale zezere” ou “01134”" />
+        <SearchInput value={query} onChange={setQuery} placeholder="Pesquisar por nome ou número SAGE" />
         <span className="filter-total">{rows.length} clientes</span>
       </div>
       <Table
@@ -37,7 +37,7 @@ export function Clientes({ pesquisa = "" }: { pesquisa?: string }) {
           { label: "Morada", render: (c) => <span className="muted">{c.morada}</span> },
           { label: "Localidade", render: (c) => c.localidade },
           { label: "NIF", render: (c) => c.nif },
-          { label: "OE", align: "right", render: (c) => state.oes.filter((o) => o.clienteCodigo === c.codigo).map((o) => o.numero).join(", ") || "—" },
+          { label: "OE", align: "right", render: (c) => state.oes.filter((o) => o.clienteCodigo === c.codigo).map((o) => o.numero).join(", ") || "Não indicado" },
         ]}
       />
     </>
