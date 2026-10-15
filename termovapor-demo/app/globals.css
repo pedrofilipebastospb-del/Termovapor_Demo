@@ -975,3 +975,116 @@ tr.row-selected td { background: var(--accent-bg); }
   .detail-list dd { text-align: left; max-width: 100%; }
   .drawer, .drawer.wide { width: 100vw; max-width: 100vw; }
 }
+
+/* ------------------------------------- barra lateral azul Termovapor */
+.sidebar {
+  background: #172a55;
+  border-right: 0;
+  box-shadow: 1px 0 0 #0f1e40;
+}
+.sidebar::before {
+  width: 3px;
+  background: linear-gradient(#3b5bb5 0 70%, var(--brand-red) 70% 100%);
+}
+.sidebar .brand-link {
+  margin: 14px 14px 4px;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 8px;
+}
+.sidebar .brand img {
+  width: 100%;
+  max-width: 172px;
+}
+.sidebar .workspace-label {
+  color: #8fa1cc;
+}
+.sidebar nav a,
+.sidebar nav a.nav-area {
+  color: #c3cde6;
+}
+.sidebar nav a svg {
+  color: #8fa1cc;
+}
+.sidebar nav a:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+.sidebar nav a.active {
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--brand-red);
+}
+.sidebar nav a.active svg {
+  color: #fff;
+}
+.sidebar .nav-count {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: transparent;
+  color: #fff;
+}
+.sidebar-utils > a,
+.sidebar-utils > button {
+  color: #aab7d8;
+}
+.sidebar-utils > a:hover,
+.sidebar-utils > button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+.sidebar-utils > a.active {
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+}
+.session-box {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.session-box .avatar {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.session-box b {
+  color: #fff;
+}
+.session-box small {
+  color: #8fa1cc;
+}
+.session-box .icon-button {
+  color: #aab7d8;
+}
+.session-box .icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.sidebar .agency {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  color: #8fa1cc;
+}
+.sidebar .agency img {
+  filter: brightness(0) invert(1);
+  opacity: 0.75;
+}
+/* sincronização SAGE */
+.sage-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.sage-sync small {
+  font-size: 11px;
+  color: #89929a;
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 800px) {
+  .sidebar .brand-link {
+    margin: 10px 6px;
+    padding: 6px;
+  }
+}

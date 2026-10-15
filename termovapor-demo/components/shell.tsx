@@ -164,9 +164,6 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-utils">
-            <button type="button" onClick={() => setPesquisa(true)}>
-              <Search size={15} /> <span>Pesquisar</span> <kbd>Ctrl K</kbd>
-            </button>
             {UTILITARIOS.filter((u) => u.perfis.includes(perfil)).map((u) => {
               const Icon = ICONES_UTIL[u.href];
               return (

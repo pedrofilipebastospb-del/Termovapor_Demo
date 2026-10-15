@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { matches } from "@/lib/format";
+import { SincronizarSage } from "./sage-sync";
 import { useStore } from "./store";
 import { PageHeader, SearchInput, Table } from "./ui";
 
@@ -16,6 +17,7 @@ export function Clientes({ pesquisa = "" }: { pesquisa?: string }) {
         eyebrow="Catálogo Sage"
         title="Clientes"
         description="Listagem de clientes usada na criação de OE. A pesquisa aceita parte do nome, várias palavras em qualquer ordem, ignora acentos e aceita o n.º SAGE."
+        actions={<SincronizarSage alvo="clientes" total={state.clientes.length} />}
       />
       <div className="filter-bar">
         <SearchInput value={query} onChange={setQuery} placeholder="Experimente: “conservas atlantico”, “vale zezere” ou “01134”" />

@@ -6,6 +6,7 @@ import type { Artigo } from "@/types";
 import { ajustarStock, atualizarArtigo } from "@/lib/actions";
 import { cobertura, livre, OIF_ATIVA, stockCritico } from "@/lib/engine";
 import { date, matches, money, num, sum } from "@/lib/format";
+import { SincronizarSage } from "./sage-sync";
 import { useStore } from "./store";
 import { Badge, Button, DetailList, Field, Metric, Modal, Note, PageHeader, SearchInput, Select, Table, type Column } from "./ui";
 
@@ -199,6 +200,7 @@ export function Artigos({ vistaInicial = "todos", pesquisa = "" }: { vistaInicia
         description="Cadastro de material elétrico com stock físico, reservas para OIF e stock livre. O stock livre é o que pode ser reservado para novas OIF."
         actions={
           <>
+            <SincronizarSage alvo="artigos" total={state.artigos.length} />
             <Button secondary onClick={() => notify("Lista operacional de artigos enviada para impressão (simulação · sem preços).")}>
               <Printer size={15} /> Imprimir lista
             </Button>
